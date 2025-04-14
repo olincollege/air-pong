@@ -1,0 +1,15 @@
+[tool.black]
+line-length = 80
+preview = true
+enable-unstable-feature = ["string_processing"]
+
+[tool.pylint.main]
+# Pygame contains C code, which causes Pylint to report many false positive
+# warnings. Suppress those here.
+extension-pkg-allow-list = "pygame"
+
+[tool.pylint.format]
+max-line-length = 80
+
+[tool.pylint."messages control"]
+disable = ["c-extension-no-member"]
