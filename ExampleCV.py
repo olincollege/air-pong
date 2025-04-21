@@ -1,6 +1,6 @@
 """
 code example from Owen Talmage's Medium post
-https://medium.com/clarityai-engineering/basic-async-python-with-asyncio-9fd573c6d37d
+https://medium.com/@oetalmage16/a-tutorial-on-finger-counting-in-real-time-video-in-python-with-opencv-and-mediapipe-114a988df46a
 """
 
 import cv2
@@ -113,8 +113,6 @@ def main():
         landmarked_frame = draw_landmarks_on_image(
             frame, hand_landmarker.result
         )
-
-        # print(frame == landmarked_frame)
 
         # display frame
         cv2.imshow("frame", landmarked_frame)
