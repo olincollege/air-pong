@@ -7,9 +7,9 @@ class PongModel:
     Class for storing the state of a ping pong game.
 
     Attributes:
-        _ball_position - A list representing the x,y,z position of the ball.
-        _ball_velocity - A list representing the velocity vector of the ball.
-        _ball_spin = A list representing a vector along the ball's spin axis,
+        _ball_position - A vector representing the x,y,z position of the ball.
+        ball_velocity - A vector representing the velocity of the ball.
+        _ball_spin = A vector representing the ball's spin axis,
                 with magnitude equal to the ball's spin rate.
     """
 
@@ -23,7 +23,7 @@ class PongModel:
     _paddle_spring = 1
     _air_density = 1.225
     _drag_coefficient = 0.7
-    _lift_coefficient = 0.25
+    _lift_coefficient = 0.025
 
     def __init__(self):
         """
@@ -31,9 +31,8 @@ class PongModel:
         """
         self.time_coefficient = 1
         self._ball_position = vector(0, 0, 0)
-        self._ball_velocity = vector(0, 0, 0)
-        self._3d_spin = vector(0, 0, 0)
-        self._2d_spin = 0
+        self.ball_velocity = vector(0, 0, 0)
+        self._ball_spin = vector(0, 0, 0)
         self._mag_force = 0
 
     def compute_magnus_force(self):
@@ -45,10 +44,10 @@ class PongModel:
             * PongModel._lift_coefficient
             * PongModel._ball_radius**2
             * math.pi
-            * self._ball_velocity.mag2
+            * self.ball_velocity.mag2
             * vector.cross(
-                self._ball_velocity,
-                self._3d_spin / (2 * math.pi) * PongModel._time_step,
+                self.ball_velocity,
+                self._ball_spin / (2 * math.pi) * PongModel._time_step,
             )
         )
 
