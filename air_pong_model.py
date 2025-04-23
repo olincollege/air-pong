@@ -14,9 +14,12 @@ class PongModel:
     """
 
     # All variables use base SI units.
+    (_table_length, _table_width, _table_height) = (2.74, 1.525, 0.76)
+    _table_front = 1
     _ball_mass = 0.0027
     _ball_radius = 0.02
-    _time_step = 0.01
+    _time_step = 0.002
+    _acc_gravity = vector(0, 9.8, 0)
     # Constants to be adjusted
     _ball_rebound = 1
     _paddle_friction = 1
@@ -30,9 +33,10 @@ class PongModel:
         Define default ball state in time and space.
         """
         self.time_coefficient = 1
-        self._ball_position = vector(0, 0, 0)
-        self.ball_velocity = vector(0, 0, 0)
+        self._ball_position = vector(1, 0.4, 0)
+        self.ball_velocity = vector(1, 0, 0)
         self._ball_spin = vector(0, 0, 0)
+        self._angle = 0
         self._mag_force = 0
 
     def compute_magnus_force(self):
@@ -51,11 +55,54 @@ class PongModel:
             )
         )
 
+    def hit_table(self):
+        """
+        Updates the velocity vector of the ball when it collides with the table.
+        """
+        if (
+            self._ball_position.x
+            >= PongModel._table_front - PongModel._ball_radius
+            and self._ball_position.x
+            <= PongModel._table_front
+            + PongModel._table_length
+            - PongModel._ball_radius
+            and self._ball_position.y
+            >= PongModel._table_height - PongModel._ball_radius
+        ):
+            self.ball_velocity = vector.rotate(
+                self.ball_velocity,
+                angle=-2 * self._angle,
+                axis=vector(0, 0, 1),
+            )
+            # self._ball_position.y = 2 * PongModel._ball_radius - self._ball_position.y
+
+        # elif (
+        #     self._ball_position.y
+        #     > PongModel._table_height - PongModel._ball_radius
+        # ):
+        #     self._ball_position.y = (
+        #         2 * (PongModel._table_height - PongModel._ball_radius)
+        #         - self._ball_position.y
+        #     )
+        #     self.ball_velocity = vector.rotate(
+        #         self.ball_velocity,
+        #         angle=-2 * self._angle,
+        #         axis=vector(0, 0, 1),
+        #     )
+        self._angle = vector.diff_angle(self.ball_velocity, vector(1, 0, 0))
+
     def trajectory(self):
         """
         Base method for determining where the ball will go next.
         """
-        pass
+        self._mag_force = self.compute_magnus_force()
+        self._ball_position += PongModel._time_step * self.ball_velocity
+        self.ball_velocity += (
+            PongModel._acc_gravity * PongModel._time_step
+            + self._mag_force / PongModel._ball_mass
+        )
+        self._angle = vector.diff_angle(self.ball_velocity, vector(1, 0, 0))
+        self.hit_table()
 
     def hit_paddle(self, paddle_angle, paddle_velocity):
         """
@@ -89,3 +136,23 @@ class PongModel:
             the paddle position.
         """
         pass
+
+    @property
+    def ball_position(self):
+        return self._ball_position
+
+    @property
+    def ball_radius(self):
+        return PongModel._ball_radius
+
+    @property
+    def table_dim(self):
+        return vector(
+            PongModel._table_length,
+            PongModel._table_width,
+            PongModel._table_height,
+        )
+
+    @property
+    def table_front(self):
+        return PongModel._table_front
