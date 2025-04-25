@@ -18,7 +18,7 @@ class PongModel:
     _table_front = 1
     _ball_mass = 0.0027
     _ball_radius = 0.02
-    _time_step = 0.0015
+    _time_step = 0.000015
     _acc_gravity = vector(0, 9.8, 0)
     # Constants to be adjusted
     _ball_rebound = 1
@@ -35,7 +35,7 @@ class PongModel:
         self.time_coefficient = 1
         self._ball_position = vector(1, 0.4, 0)
         self.ball_velocity = vector(1.5, 0, 0)
-        self._ball_spin = vector(0, 0, 5)
+        self._ball_spin = vector(0, 0, 2)
         self._angle = 0
         self._mag_force = 0
 

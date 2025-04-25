@@ -15,6 +15,7 @@ class Particle:
         self.thickness = 1
         self.speed = 0
         self.angle = 0
+        self.fps = 400
 
     def display(self):
         pygame.draw.circle(
@@ -41,8 +42,16 @@ class Particle:
         )
 
     def move(self):
-        self.x += math.sin(self.angle) * self.speed
-        self.y -= math.cos(self.angle) * self.speed
+        self.x += (
+            (math.sin(self.angle) * self.speed)
+            * self.clock.tick(self.fps)
+            / 1000
+        )
+        self.y -= (
+            (math.cos(self.angle) * self.speed)
+            * self.clock.tick(self.fps)
+            / 1000
+        )
 
     def bounce(self):
         if (
@@ -50,24 +59,36 @@ class Particle:
             and self.x <= width * 0.8 - self.size
             and self.y >= height - (height * 0.1) - self.size
         ):
-            self.angle = -self.angle
+            # self.angle = -self.angle
             self.y = 2 * self.size - self.y
+            print("boing")
 
         if self.x > width - self.size:
             self.x = 2 * (width - self.size) - self.x
             self.angle = -self.angle
+            print("boing")
 
         elif self.x < self.size:
             self.x = 2 * self.size - self.x
             self.angle = -self.angle
+            print("boing")
 
         if self.y > height - self.size:
             self.y = 2 * (height - self.size) - self.y
             self.angle = math.pi - self.angle
+            print("boing")
 
         elif self.y < self.size:
             self.y = 2 * self.size - self.y
             self.angle = math.pi - self.angle
+            print("boing")
+
+    clock = pygame.time.Clock()
+
+    def fps_counter(self):
+        self.clock.tick(self.fps)
+        fps = str(int(self.clock.get_fps()))
+        print(fps)
 
 
 screen = pygame.display.set_mode((width, height))
@@ -79,14 +100,14 @@ my_particles = []
 for n in range(number_of_particles):
     size = 15
     # x = random.randint(size, width - size)
-    y = random.randint(size, height - size)
+    # y = random.randint(size, height - size)
     x = width * 0.2
-    # y = height - size
+    y = 0.8 * height
 
     particle = Particle(x, y, size)
-    particle.speed = 0.5
+    particle.speed = 1000
     # particle.angle = random.uniform(0, math.pi * 2)
-    particle.angle = 200 * (math.pi / 180)
+    particle.angle = 120 * (math.pi / 180)
 
     my_particles.append(particle)
 
@@ -102,5 +123,7 @@ while running:
         particle.move()
         particle.bounce()
         particle.display()
+
+    particle.fps_counter()
 
     pygame.display.flip()
