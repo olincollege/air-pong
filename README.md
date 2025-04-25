@@ -1,6 +1,7 @@
 # air-pong
 
 Ping Pong game simulator that uses computer vision for human input.
+__This project is currently in progress and is not ready to be used__
 
 ## Setup
 * python: = 3.10.xx
