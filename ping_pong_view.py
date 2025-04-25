@@ -3,3 +3,4 @@ class PongView:
 
     def __init__(self):
         ### Add stuff
+        pass
