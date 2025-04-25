@@ -12,26 +12,19 @@ import numpy as np
 class PongController:
     """controller class for air-pong game"""
 
-    def __init__(
-        self, is_debug=True
-    ):  # THIS LINE TO BE CHANGED ONCE FINISHED _degug = False
+    def __init__(self, is_debug=True):
+        # PREVIOUS LINE TO BE CHANGED ONCE FINISHED _degug = False
         print("initializing controller")
         self._debug = is_debug
         self._running = True
 
-        # define cv handlandmarker callback
         self.cv_result = mp.tasks.vision.HandLandmarkerResult
-        # define class landmarker
         self.landmarker = mp.tasks.vision.HandLandmarker
-        # create and assign self.landmarker as landmarker
         self.create_landmarker()
 
-        print("past landmarker")
         # threading
         self.cv_thread = threading.Thread(target=self.hand_cv)
-        print("define thread")
         self.cv_thread.start()
-        print("started thread and finishing init")
 
     def create_landmarker(self):
         """creates the landmarker object from the hand landmarker.task"""
@@ -65,6 +58,7 @@ class PongController:
         cap = cv2.VideoCapture(0)
 
         while self._running:
+            print("running while")
             # pull frame
             _, frame = cap.read()
             # mirror frame
@@ -72,14 +66,6 @@ class PongController:
             # non-blocking landmarker execution
             self.detect_async(frame)
             print(f"cv result is {self.cv_result}")
-            # draw the landmarks on the page
-            if self._debug:
-                landmarked_frame = draw_landmarks_on_image(
-                    frame, self.cv_result
-                )
-                cv2.imshow("frame", landmarked_frame)
-                if cv2.waitKey(1) == ord("q"):
-                    break
 
         # release everything
         cap.release()
@@ -117,10 +103,10 @@ def draw_landmarks_on_image(
         annotated_image: a numpy rgb image array
     """
     try:
-        if detection_result.landmarks() == []:
+        if detection_result.hand_landmarks == []:
             return rgb_image
         else:
-            hand_landmarks_list = detection_result.landmarks()
+            hand_landmarks_list = detection_result.hand_landmarks
             annotated_image = np.copy(rgb_image)
 
             # Loop through the detected hands to visualize.
