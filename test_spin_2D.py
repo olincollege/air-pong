@@ -14,9 +14,9 @@ def display(pong_instance):
     pygame.draw.circle(
         screen,
         (
-            17 * min(pong_instance._ball_spin.mag, 15),
-            17 * min(pong_instance._ball_spin.mag, 15),
-            17 * min(pong_instance._ball_spin.mag, 15),
+            17 * min(pong_instance.ball_spin.mag, 15),
+            17 * min(pong_instance.ball_spin.mag, 15),
+            17 * min(pong_instance.ball_spin.mag, 15),
         ),
         (
             UNIT_SCALING * pong_instance.ball_position.x + X_SHIFT,
@@ -25,6 +25,17 @@ def display(pong_instance):
         UNIT_SCALING * pong_instance.ball_radius,
         # THICKNESS,
         width=0,
+    )
+    pygame.draw.circle(
+        screen,
+        255,
+        (
+            UNIT_SCALING * pong_instance.ball_position.x + X_SHIFT,
+            UNIT_SCALING * pong_instance.ball_position.y + Z_SHIFT,
+        ),
+        UNIT_SCALING * pong_instance.ball_radius,
+        # THICKNESS,
+        width=1,
     )
     pygame.draw.rect(
         screen,
@@ -82,5 +93,5 @@ while running:
     screen.fill(background_colour)
     particle.trajectory()
     display(particle)
-    print(particle._ball_spin.mag)
+    # print(particle._ball_spin.mag)
     pygame.display.flip()
