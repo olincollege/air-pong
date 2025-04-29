@@ -7,16 +7,25 @@ import mediapipe as mp
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import numpy as np
+from vpython import vector
+from pynput import keyboard
 
 
 class PongController:
     """controller class for air-pong game"""
 
     def __init__(self):
-        # PREVIOUS LINE TO BE CHANGED ONCE FINISHED _degug = False
         print("initializing controller")
         self._running = True
 
+        # keyboard listener
+        self._keyboard_listen = keyboard.Listener(
+            on_press=self.on_press, on_release=self.on_release
+        )
+        self._keyboard_listen.start()
+        self._latest_key = None
+
+        # create landmarker
         self.cv_result = mp.tasks.vision.HandLandmarkerResult
         self.landmarker = mp.tasks.vision.HandLandmarker
         self.create_landmarker()
@@ -24,6 +33,18 @@ class PongController:
         # threading
         self.cv_thread = threading.Thread(target=self.hand_cv)
         self.cv_thread.start()
+
+    def on_press(self, key):
+        """check if key is pressed pynput"""
+
+        self._latest_key = key
+
+    def on_release(self, key, injected):
+        """check if key is released"""
+        self._latest_key = None
+        if key == keyboard.Key.esc:
+            # Stop listener
+            print("wants to end")
 
     def create_landmarker(self):
         """creates the landmarker object from the hand landmarker.task"""
@@ -56,15 +77,18 @@ class PongController:
         # access webcam
         cap = cv2.VideoCapture(0)
 
+        self._cap_width = cv2.CAP_PROP_FRAME_WIDTH
+        self._cap_height = cv2.CAP_PROP_FRAME_HEIGHT
+        self._cap_timestamp = cv2.CAP_PROP_POS_MSEC
+
         while self._running:
-            print("running while")
             # pull frame
             _, frame = cap.read()
             # mirror frame
             frame = cv2.flip(frame, 1)
             # non-blocking landmarker execution
             self.detect_async(frame)
-            print(f"cv result is {self.cv_result}")
+            # print(f"cv result is {self.cv_result}")
 
         # release everything
         cap.release()
@@ -80,7 +104,28 @@ class PongController:
             image=mp_image, timestamp_ms=int(time.time() * 1000)
         )
 
+    def get_hand(self):
+        """
+        Returns the hand inputs from mediapipe after some processing.
+
+        Returns:
+            pos: a vpython vector representing the xyz position of hand
+            vel: a vpython vector of velocity in m/s
+            angle: a vpython normal vector to the center joint of palm
+        """
+        middle_knuckle = 9
+        try:
+            if self.cv_result != mp.tasks.vision.HandLandmarkerResult:
+                print(self.cv_result.hand_landmarks[0][middle_knuckle])
+        except:
+            w = 1
+
     def close(self):
         """close all running processes for controller"""
         self._running = False
         self.landmarker.close()
+
+    @property
+    def latest_key(self):
+        """gets the latest key pressed on keyboard"""
+        return self._latest_key
