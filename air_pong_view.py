@@ -17,6 +17,7 @@ class PongView:
 
     def display(self, pong_instance, screen):
         self.screen = screen
+        screen.fill((self.background_colour))
         # ball
         pygame.draw.circle(
             screen,
@@ -61,7 +62,6 @@ class PongView:
                 self.UNIT_SCALING * 0.1525,  # Height of the net
             ),
         )
-        screen.fill((self.background_colour))
 
         # pygame.draw.line(
         #     screen,

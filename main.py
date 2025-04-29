@@ -8,25 +8,16 @@ screen = pygame.display.set_mode((1200, 700))
 screen.fill((255, 255, 255))
 
 
-def draw():
-    pygame.draw.rect(
-        screen,
-        (0, 0, 255),
-        (700 * 0.2, 1200 - (1200 * 0.1), 700 * 0.6, 1200 * 0.01),
-    )
-
-
 def main():
-    # particle = PongModel()
-    # view = PongView()
+    particle = PongModel()
+    view = PongView()
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        draw()
-        # particle.trajectory()
-        # view.display(particle, screen)
+        particle.trajectory()
+        view.display(particle, screen)
         pygame.display.flip()
 
 
