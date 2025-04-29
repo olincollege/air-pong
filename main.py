@@ -13,8 +13,8 @@ def main():
 
     # intialize MVCC (2 controllers)
     model = PongModel()
-    controller1 = PongController(model, 1)
-    controller2 = PongController(model, 2)
+    controller1 = PongController(model, 1, "Left")
+    controller2 = PongController(model, 2, "Right")
     view = PongView()
 
     # main loop to run code
@@ -22,10 +22,15 @@ def main():
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                controller1.release()
+                controller2.release()
                 running = False
+        controller1.hand_cv()
         model.trajectory()
         view.display(model, screen)
         pygame.display.flip()
+
+        controller1.get_hand()
 
 
 if __name__ == "__main__":

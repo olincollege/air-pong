@@ -128,3 +128,30 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# # threading
+# self.cv_thread = threading.Thread(target=self.hand_cv)
+# self.cv_thread.start()
+
+# def hand_cv(self):
+#     """used to begin mediapipe hand detection"""
+#     # access webcam
+#     cap = cv2.VideoCapture(0)
+
+#     self._cap_width = cv2.CAP_PROP_FRAME_WIDTH
+#     self._cap_height = cv2.CAP_PROP_FRAME_HEIGHT
+#     self._cap_timestamp = cv2.CAP_PROP_POS_MSEC
+
+#     while self._running:
+#         # pull frame
+#         _, frame = cap.read()
+#         # mirror frame
+#         frame = cv2.flip(frame, 1)
+#         # non-blocking landmarker execution
+#         self.detect_async(frame)
+#         # print(f"cv result is {self.cv_result}")
+
+#     # release everything
+#     cap.release()
+#     cv2.destroyAllWindows()
+#     # close local landmarker
