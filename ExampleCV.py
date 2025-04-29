@@ -33,9 +33,9 @@ class landmarker_and_result:
             ),  # path to model
             running_mode=mp.tasks.vision.RunningMode.LIVE_STREAM,  # running on a live stream
             num_hands=1,  # track both hands
-            min_hand_detection_confidence=0.3,  # lower than value to get predictions more often
-            min_hand_presence_confidence=0.3,  # lower than value to get predictions more often
-            min_tracking_confidence=0.3,  # lower than value to get predictions more often
+            min_hand_detection_confidence=0.5,  # lower than value to get predictions more often
+            min_hand_presence_confidence=0.5,  # lower than value to get predictions more often
+            min_tracking_confidence=0.5,  # lower than value to get predictions more often
             result_callback=update_result,
         )
 

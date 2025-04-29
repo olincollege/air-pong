@@ -14,7 +14,8 @@ from pynput import keyboard
 class PongController:
     """controller class for air-pong game"""
 
-    def __init__(self):
+    def __init__(self, model, player):
+        self._player = player
         print("initializing controller")
         self._running = True
 
@@ -38,6 +39,26 @@ class PongController:
         """check if key is pressed pynput"""
 
         self._latest_key = key
+        if self._player == 1:
+            # check player one keyboard inputs
+            if key == keyboard.Key.up:
+                print(f"up's been pressed {key}")
+            elif key == keyboard.Key.down:
+                print(f"down's been pressed {key}")
+            elif key == keyboard.Key.left:
+                print(f"left's been pressed {key}")
+            elif key == keyboard.Key.right:
+                print(f"right's been pressed {key}")
+        elif self._player == 2:
+            # check player two keyboard inputs
+            if key == keyboard.KeyCode.from_char("w"):
+                print(f"w's been pressed {key}")
+            elif key == keyboard.KeyCode.from_char("s"):
+                print(f"down's been pressed {key}")
+            elif key == keyboard.KeyCode.from_char("a"):
+                print(f"left's been pressed {key}")
+            elif key == keyboard.KeyCode.from_char("d"):
+                print(f"right's been pressed {key}")
 
     def on_release(self, key, injected):
         """check if key is released"""
