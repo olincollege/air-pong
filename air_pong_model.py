@@ -25,7 +25,7 @@ class PongModel:
     _ball_rebound = 1
     _paddle_friction = 1
     _table_friction = 0.75
-    _paddle_spring = 1
+    _paddle_spring = 100
     _air_density = 1.19
     _drag_coefficient = 0.47
     _lift_coefficient = 0.25
@@ -35,16 +35,16 @@ class PongModel:
         Define default ball state in time and space.
         """
         self.time_coefficient = 1
-        self._ball_position = vector(1.2, 0.55, 0)
-        self._ball_velocity = vector(0, 0, 0)
+        self._ball_position = vector(1.5, 0.65, 0)
+        self._ball_velocity = vector(-2, 0, 0)
         self._ball_spin = vector(0, 0, 0)
         self._angle = 0
         self._mag_force = vector(0, 0, 0)
         self._drag_force = vector(0, 0, 0)
-        self._paddle_edges = []
+        self._paddle_edges = [vector(1, 0.55, 0), vector(1, 0.7, 0)]
         self._player_coefficient = 1
-        self._paddle_normal = vector(0, 0, 0)
-        self._paddle_force = vector(0, 0, 0)
+        self._paddle_normal = vector(1, 0, 0)
+        self._paddle_force = 0.5
 
     def compute_magnus_force(self):
         """
@@ -93,7 +93,6 @@ class PongModel:
             and self._ball_position.y
             >= PongModel._table_height - PongModel._ball_radius
         ):
-            print(self._ball_velocity)
             self._ball_velocity = vector.rotate(
                 self._ball_velocity,
                 angle=-2 * self._angle,
@@ -103,8 +102,6 @@ class PongModel:
                 vector.cross(-self._ball_spin, vector(0, -1, 0))
                 * self._ball_radius**2
             )
-            print(self._drag_force)
-            print(self._ball_velocity)
             self._ball_velocity += (
                 PongModel._table_friction * _sp_angular_momentum
             )
@@ -119,8 +116,11 @@ class PongModel:
         """
         Base method for determining where the ball will go next.
         """
+        self.hit_table()
+        self.paddle_bounce()
         self._mag_force = self.compute_magnus_force()
-        self._drag_force = self.compute_drag()
+        # self._drag_force = self.compute_drag()
+        self._drag_force = vector(0, 0, 0)
         self._ball_position += PongModel._time_step * self._ball_velocity
         self._ball_velocity += (
             PongModel._acc_gravity * PongModel._time_step
@@ -128,16 +128,17 @@ class PongModel:
             * PongModel._time_step
             / PongModel._ball_mass
         )
-        self.hit_table()
 
     def update_paddle(self, paddle_normal, paddle_position, paddle_force):
         """
         Determines whether the ball is in contact with the paddle.
 
         Args:
-            paddle_angle - A vector representing the unit normal vector to the paddle.
+            paddle_normal - A vector representing the unit normal vector to the paddle.
             paddle_position - A vector representing a coordinate giving the center of mass
             of the paddle.
+            paddle_force - A vector representing the force applied to the paddle when swung
+            at the ball.
         """
         self._paddle_normal = paddle_normal
         self._paddle_force = paddle_force
@@ -173,31 +174,32 @@ class PongModel:
         """
         Base method for updating the ball state after hitting a paddle,
         given a velocity and spin for the ball and a velocity and angle for the paddle.
-
-        Args:
-            paddle_velocity - A vector representing the velocity vector of the paddle.
         """
         if (
-            self._ball_position.x
-            + self._player_coefficient * PongModel._ball_radius
-            == self._paddle_edges[0].x
+            self._player_coefficient
+            * (self._ball_position.x - PongModel._ball_radius)
+            <= self._player_coefficient * self._paddle_edges[0].x
             and self._paddle_edges[0].y
             <= self._ball_position.y
             <= self._paddle_edges[1].y
         ):
-            spring_disp = vector.proj(self._ball_position, self._paddle_normal)
-            _initial_velocity = vector.proj(
-                self._ball_velocity, self._paddle_normal
+            _spring_disp = vector.proj(self._ball_position, self._paddle_normal)
+            _initial_velocity = abs(
+                vector.proj(self._ball_velocity, self._paddle_normal).mag
             )
             _cumm_time = 0
+            print(_spring_disp)
             # Define a cumulative time step because spring equation is deterministic not iterative.
-            while spring_disp <= vector.proj(
-                self._player_coefficient * self._ball_position,
-                self._paddle_normal,
+            while (
+                _spring_disp.mag
+                >= vector.proj(
+                    self._player_coefficient * self._ball_position,
+                    self._paddle_normal,
+                ).mag
             ):
-                self._ball_position += (
-                    self._paddle_normal
-                    * 0.5
+                _cumm_time += PongModel._time_step
+                self._ball_position += self._paddle_normal * (
+                    0.5
                     * self._paddle_force
                     / PongModel._ball_mass
                     * _cumm_time**2
@@ -210,12 +212,9 @@ class PongModel:
                         )
                     )
                 )
-                self._ball_velocity += (
-                    self._paddle_normal
-                    * self._paddle_force
-                    / PongModel._ball_mass
-                    * _cumm_time
-                    - _initial_velocity
+                self._ball_velocity = -self._paddle_normal * (
+                    -self._paddle_force / PongModel._ball_mass * _cumm_time
+                    + _initial_velocity
                     * np.cos(
                         _cumm_time
                         * np.sqrt(
@@ -223,9 +222,9 @@ class PongModel:
                         )
                     )
                 )
-                _cumm_time += PongModel._time_step
-                print(self._ball_position)
-                print(self._ball_velocity)
+                print(f"The position is {self._ball_position}")
+                print(f"The velocity is {self._ball_velocity}")
+                print(f"The elapsed time is {_cumm_time}")
 
     def swing_paddle(self, paddle_angle, paddle_velocity, paddle_position):
         """
@@ -236,6 +235,12 @@ class PongModel:
             paddle_velocity - A vector representing the velocity vector of the paddle.
             paddle_position - A vector representing a coordinate giving the center of mass
                 of the paddle.
+        """
+        pass
+
+    def reset_ball(self):
+        """
+        Method for establishing ball starting conditions.
         """
         pass
 
