@@ -1,5 +1,5 @@
 from vpython import vector
-import math
+import numpy as np
 
 
 class PongModel:
@@ -15,6 +15,7 @@ class PongModel:
 
     # All variables use base SI units.
     (_table_length, _table_width, _table_height) = (2.74, 1.525, 0.76)
+    (_paddle_width, paddle_depth) = (0.15, 0.17)
     _table_front = 1
     _ball_mass = 0.0027
     _ball_radius = 0.02
@@ -35,11 +36,15 @@ class PongModel:
         """
         self.time_coefficient = 1
         self._ball_position = vector(1.2, 0.55, 0)
-        self._ball_velocity = vector(1, -1, 0)
-        self._ball_spin = vector(0, 0, 50)
+        self._ball_velocity = vector(0, 0, 0)
+        self._ball_spin = vector(0, 0, 0)
         self._angle = 0
-        self._mag_force = 0
-        self._drag_force = 0
+        self._mag_force = vector(0, 0, 0)
+        self._drag_force = vector(0, 0, 0)
+        self._paddle_edges = []
+        self._player_coefficient = 1
+        self._paddle_normal = vector(0, 0, 0)
+        self._paddle_force = vector(0, 0, 0)
 
     def compute_magnus_force(self):
         """
@@ -49,11 +54,11 @@ class PongModel:
             0.5
             * PongModel._lift_coefficient
             * PongModel._ball_radius**2
-            * math.pi
+            * np.pi
             * self._ball_velocity.mag2
             * vector.cross(
                 self._ball_velocity,
-                self._ball_spin / (2 * math.pi) * PongModel._time_step,
+                self._ball_spin / (2 * np.pi) * PongModel._time_step,
             )
         )
 
@@ -70,8 +75,8 @@ class PongModel:
                 self._ball_velocity.z**2,
             )
             * PongModel._drag_coefficient
-            * math.pi
-            * self._ball_radius**2
+            * np.pi
+            * PongModel._ball_radius**2
         )
 
     def hit_table(self):
@@ -88,6 +93,7 @@ class PongModel:
             and self._ball_position.y
             >= PongModel._table_height - PongModel._ball_radius
         ):
+            print(self._ball_velocity)
             self._ball_velocity = vector.rotate(
                 self._ball_velocity,
                 angle=-2 * self._angle,
@@ -97,6 +103,7 @@ class PongModel:
                 vector.cross(-self._ball_spin, vector(0, -1, 0))
                 * self._ball_radius**2
             )
+            print(self._drag_force)
             print(self._ball_velocity)
             self._ball_velocity += (
                 PongModel._table_friction * _sp_angular_momentum
@@ -117,22 +124,108 @@ class PongModel:
         self._ball_position += PongModel._time_step * self._ball_velocity
         self._ball_velocity += (
             PongModel._acc_gravity * PongModel._time_step
-            + (self._mag_force - self._drag_force)
+            + (self._mag_force + self._drag_force)
             * PongModel._time_step
             / PongModel._ball_mass
         )
         self.hit_table()
 
-    def hit_paddle(self, paddle_angle, paddle_velocity):
+    def update_paddle(self, paddle_normal, paddle_position, paddle_force):
+        """
+        Determines whether the ball is in contact with the paddle.
+
+        Args:
+            paddle_angle - A vector representing the unit normal vector to the paddle.
+            paddle_position - A vector representing a coordinate giving the center of mass
+            of the paddle.
+        """
+        self._paddle_normal = paddle_normal
+        self._paddle_force = paddle_force
+        self._paddle_edges = [
+            paddle_position
+            + vector.rotate(
+                PongModel._paddle_width / 2 * paddle_normal,
+                angle=90,
+                axis=vector(0, 0, 1),
+            ),
+            paddle_position
+            - vector.rotate(
+                PongModel._paddle_width / 2 * paddle_normal,
+                angle=90,
+                axis=vector(0, 0, 1),
+            ),
+        ]
+        _horizontal_factor = vector.rotate(
+            vector.norm(vector(paddle_normal.x, 0, paddle_normal.z)),
+            angle=np.pi / 2,
+            axis=vector(0, 1, 0),
+        )
+        _vertical_factor = vector.rotate(
+            _horizontal_factor, angle=np.pi / 2, axis=paddle_normal
+        )
+        _change_basis = np.array(
+            [paddle_normal.x, _vertical_factor.x, _horizontal_factor.x],
+            [paddle_normal.y, _vertical_factor.y, _horizontal_factor.y],
+            [paddle_normal.z, _vertical_factor.z, _horizontal_factor.z],
+        )
+
+    def paddle_bounce(self):
         """
         Base method for updating the ball state after hitting a paddle,
         given a velocity and spin for the ball and a velocity and angle for the paddle.
 
         Args:
-            paddle_angle - A vector representing the normal vector to the paddle.
             paddle_velocity - A vector representing the velocity vector of the paddle.
         """
-        pass
+        if (
+            self._ball_position.x
+            + self._player_coefficient * PongModel._ball_radius
+            == self._paddle_edges[0].x
+            and self._paddle_edges[0].y
+            <= self._ball_position.y
+            <= self._paddle_edges[1].y
+        ):
+            spring_disp = vector.proj(self._ball_position, self._paddle_normal)
+            _initial_velocity = vector.proj(
+                self._ball_velocity, self._paddle_normal
+            )
+            _cumm_time = 0
+            # Define a cumulative time step because spring equation is deterministic not iterative.
+            while spring_disp <= vector.proj(
+                self._player_coefficient * self._ball_position,
+                self._paddle_normal,
+            ):
+                self._ball_position += (
+                    self._paddle_normal
+                    * 0.5
+                    * self._paddle_force
+                    / PongModel._ball_mass
+                    * _cumm_time**2
+                    - _initial_velocity
+                    / np.sqrt(PongModel._paddle_spring / PongModel._ball_mass)
+                    * np.sin(
+                        _cumm_time
+                        * np.sqrt(
+                            PongModel._paddle_spring / PongModel._ball_mass
+                        )
+                    )
+                )
+                self._ball_velocity += (
+                    self._paddle_normal
+                    * self._paddle_force
+                    / PongModel._ball_mass
+                    * _cumm_time
+                    - _initial_velocity
+                    * np.cos(
+                        _cumm_time
+                        * np.sqrt(
+                            PongModel._paddle_spring / PongModel._ball_mass
+                        )
+                    )
+                )
+                _cumm_time += PongModel._time_step
+                print(self._ball_position)
+                print(self._ball_velocity)
 
     def swing_paddle(self, paddle_angle, paddle_velocity, paddle_position):
         """
