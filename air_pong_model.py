@@ -16,6 +16,7 @@ class PongModel:
     # All variables use base SI units.
     (_table_length, _table_width, _table_height) = (2.74, 1.525, 0.76)
     (_paddle_width, paddle_depth) = (0.15, 0.17)
+    _net_height = 0.1525
     _table_front = 1
     _ball_mass = 0.0027
     _ball_radius = 0.02
@@ -30,9 +31,15 @@ class PongModel:
     _drag_coefficient = 0.47
     _lift_coefficient = 0.25
 
-    def __init__(self):
+    def __init__(self, paddle_normal, paddle_force, win_threshold):
         """
         Define default ball state in time and space.
+
+        Args:
+            paddle_normal - A unit vector representing the normal to the paddle.
+            paddle_force - An integer representing the force applied by the paddle
+                at a given moment.
+            win_threshold - An integer designating how many points to play to.
         """
         self.time_coefficient = 1
         self._ball_position = vector(1.5, 0.65, 0)
@@ -43,8 +50,10 @@ class PongModel:
         self._drag_force = vector(0, 0, 0)
         self._paddle_edges = [vector(1, 0.55, 0), vector(1, 0.7, 0)]
         self._player_coefficient = 1
-        self._paddle_normal = vector(1, 0, 0)
-        self._paddle_force = 0.5
+        self._paddle_normal = paddle_normal
+        self._paddle_force = paddle_force
+        self._player_score = (0, 0)
+        self._win_threshold = win_threshold
 
     def compute_magnus_force(self):
         """
@@ -111,6 +120,45 @@ class PongModel:
                 / self._ball_radius**2
             )
         self._angle = vector.diff_angle(self._ball_velocity, vector(1, 0, 0))
+
+    def hit_net(self):
+        """
+        Updates the velocity vector and spin of the ball when it collides with the net.
+        """
+        if round(
+            self._ball_position.x + self._ball_radius, 3
+        ) == PongModel._table_front + round(PongModel._table_length / 2, 3):
+            if (
+                self.ball_position.y
+                > PongModel._net_height + PongModel._table_height
+            ):
+                self._ball_velocity = vector(0, 0, 0)
+            elif (
+                self.ball_position.y + self._ball_radius
+                >= PongModel._net_height + PongModel._table_height
+            ):
+                self._ball_velocity = vector.rotate(
+                    2
+                    * np.arcsin(
+                        (
+                            self.ball_position.y
+                            - PongModel._net_height
+                            - PongModel._table_height
+                        )
+                        / PongModel.ball_radius
+                    )
+                    / np.pi
+                    * self._ball_velocity,
+                    axis=vector(0, 0, 1) + self._ball_spin,
+                    angle=np.arccos(
+                        (
+                            self.ball_position.y
+                            - PongModel._net_height
+                            - PongModel._table_height
+                        )
+                        / PongModel.ball_radius
+                    ),
+                )
 
     def trajectory(self):
         """
@@ -238,21 +286,24 @@ class PongModel:
         """
         pass
 
-    def reset_ball(self):
+    def check_win(self):
         """
-        Method for establishing ball starting conditions.
-        """
-        pass
+        Method for determining if the player has won.
 
-    def time_rate(self, motion_rate):
+        Returns:
+            An integer corresponding to the winning player or boolean False otherwise.
         """
-        Method to update the time coefficient based on an input motion rate.
-
-        Args:
-            motion_rate - An integer representing the rate of change of
-            the paddle position.
-        """
-        pass
+        if (
+            self._player_score[0] >= self._win_threshold
+            and self._player_score[0] - 1 > self._player_score[1]
+        ):
+            return 1
+        if (
+            self._player_score[1] >= self._win_threshold
+            and self._player_score[1] - 1 > self._player_score[0]
+        ):
+            return 2
+        return False
 
     @property
     def ball_position(self):
