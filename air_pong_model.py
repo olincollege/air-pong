@@ -7,15 +7,40 @@ class PongModel:
     Class for storing the state of a ping pong game.
 
     Attributes:
-        _ball_position - A vector representing the x,y,z position of the ball.
-        _ball_velocity - A vector representing the velocity of the ball.
-        _ball_spin = A vector representing the ball's spin axis,
+        ball_position - A vector representing the x,y,z position of the ball.
+        ball_velocity - A vector representing the velocity of the ball.
+        ball_spin = A vector representing the ball's spin axis,
                 with magnitude equal to the ball's spin rate.
+        table_length - Float equal to the length of ping pong table (meters).
+        table_width - Float equal to the width of ping pong table (meters).
+        table_height - Float equal to the height of ping pong table (meters).
+        paddle_width - Float equal to the width of ping pong paddle (meters).
+        paddle_length -  Float equal to the length of ping pong paddle (meters).
+        net_height - Float equal to the height of the net (meters).
+        table_front - Float giving the position of the front of the ping
+            pong table (meters).
+        ball_mass - Float equal to the mass of the ball (kg).
+        ball_radius - Float equal to the radius of the ball (m).
+        time_step - Float establishing the amount of time between frames (sec).
+        acc_gravity - Float giving the acceleration due to gravity (ms^-2)
+        ball_rebound - Float corresponding to the percentage of kinetic energy
+            conserved in a table bounce.
+        paddle_friction - Float representing the paddle coefficient of friction.
+        table_friction - Float representing the percentage of angular momentum
+            transferred in the bounce.
+        paddle_stiff - Float representing the stiffness of the paddle rubber
+            (N/m).
+        air_density - Float representing the density of air (kgm^-3).
+        drag_coefficient - Float representing the coefficient of drag for a
+            sphere.
+        lift_coefficient - Float representing the coefficient of lift of a
+            ping pong ball.
+        paddle_force - The force applied by a player wielding their paddle (N).
     """
 
     # All variables use base SI units.
     (_table_length, _table_width, _table_height) = (2.74, 1.525, 0.76)
-    (_paddle_width, paddle_depth) = (0.15, 0.17)
+    (_paddle_width, paddle_length) = (0.15, 0.17)
     _net_height = 0.1525
     _table_front = 1
     _ball_mass = 0.0027
@@ -26,12 +51,13 @@ class PongModel:
     _ball_rebound = 1
     _paddle_friction = 1
     _table_friction = 0.75
-    _paddle_spring = 100
+    _paddle_stiff = 100
     _air_density = 1.19
     _drag_coefficient = 0.47
     _lift_coefficient = 0.25
+    _paddle_force = 0.5
 
-    def __init__(self, paddle_normal, paddle_force, win_threshold):
+    def __init__(self, paddle_normal, paddle_velocity, win_threshold):
         """
         Define default ball state in time and space.
 
@@ -41,7 +67,6 @@ class PongModel:
                 at a given moment.
             win_threshold - An integer designating how many points to play to.
         """
-        self.time_coefficient = 1
         self._ball_position = vector(1.5, 0.65, 0)
         self._ball_velocity = vector(-2, 0, 0)
         self._ball_spin = vector(0, 0, 0)
@@ -51,13 +76,13 @@ class PongModel:
         self._paddle_edges = [vector(1, 0.55, 0), vector(1, 0.7, 0)]
         self._player_coefficient = 1
         self._paddle_normal = paddle_normal
-        self._paddle_force = paddle_force
+        self._paddle_velocity = paddle_velocity
         self._player_score = (0, 0)
         self._win_threshold = win_threshold
 
     def compute_magnus_force(self):
         """
-        Returns a vector giving the magnus force on the ping pong ball.
+        Returns a vector giving the magnus force (N) on the ping pong ball.
         """
         return (
             0.5
@@ -73,7 +98,7 @@ class PongModel:
 
     def compute_drag(self):
         """
-        Returns a vector giving the opposing drag force on the ping pong ball.
+        Returns a vector giving the opposing drag force (N) on the ping pong ball.
         """
         return (
             0.5
@@ -162,7 +187,7 @@ class PongModel:
 
     def trajectory(self):
         """
-        Base method for determining where the ball will go next.
+        Base method for determining where the ball will go next after a time_step.
         """
         self.hit_table()
         self.paddle_bounce()
@@ -177,7 +202,7 @@ class PongModel:
             / PongModel._ball_mass
         )
 
-    def update_paddle(self, paddle_normal, paddle_position, paddle_force):
+    def update_paddle(self, paddle_normal, paddle_position, paddle_velocity):
         """
         Determines whether the ball is in contact with the paddle.
 
@@ -185,11 +210,11 @@ class PongModel:
             paddle_normal - A vector representing the unit normal vector to the paddle.
             paddle_position - A vector representing a coordinate giving the center of mass
             of the paddle.
-            paddle_force - A vector representing the force applied to the paddle when swung
+            paddle_velocity - A vector representing the velocity of the paddle when swung
             at the ball.
         """
         self._paddle_normal = paddle_normal
-        self._paddle_force = paddle_force
+        self._paddle_velocity = paddle_velocity
         self._paddle_edges = [
             paddle_position
             + vector.rotate(
@@ -234,7 +259,7 @@ class PongModel:
             _spring_disp = vector.proj(self._ball_position, self._paddle_normal)
             _initial_velocity = abs(
                 vector.proj(self._ball_velocity, self._paddle_normal).mag
-            )
+            ) + abs(vector.proj(self._paddle_velocity, self._paddle_normal).mag)
             _cumm_time = 0
             print(_spring_disp)
             # Define a cumulative time step because spring equation is deterministic not iterative.
@@ -245,46 +270,34 @@ class PongModel:
                     self._paddle_normal,
                 ).mag
             ):
-                _cumm_time += PongModel._time_step
+                _cumm_time += PongModel._time_step / 10
                 self._ball_position += self._paddle_normal * (
                     0.5
-                    * self._paddle_force
+                    * PongModel._paddle_force
                     / PongModel._ball_mass
                     * _cumm_time**2
                     - _initial_velocity
-                    / np.sqrt(PongModel._paddle_spring / PongModel._ball_mass)
+                    / np.sqrt(PongModel._paddle_stiff / PongModel._ball_mass)
                     * np.sin(
                         _cumm_time
                         * np.sqrt(
-                            PongModel._paddle_spring / PongModel._ball_mass
+                            PongModel._paddle_stiff / PongModel._ball_mass
                         )
                     )
                 )
                 self._ball_velocity = -self._paddle_normal * (
-                    -self._paddle_force / PongModel._ball_mass * _cumm_time
+                    -PongModel._paddle_force / PongModel._ball_mass * _cumm_time
                     + _initial_velocity
                     * np.cos(
                         _cumm_time
                         * np.sqrt(
-                            PongModel._paddle_spring / PongModel._ball_mass
+                            PongModel._paddle_stiff / PongModel._ball_mass
                         )
                     )
                 )
                 print(f"The position is {self._ball_position}")
                 print(f"The velocity is {self._ball_velocity}")
                 print(f"The elapsed time is {_cumm_time}")
-
-    def swing_paddle(self, paddle_angle, paddle_velocity, paddle_position):
-        """
-        Base method for moving the paddle given an input velocity and angle.
-
-        Args:
-            paddle_angle - A vector representing the normal vector to the paddle.
-            paddle_velocity - A vector representing the velocity vector of the paddle.
-            paddle_position - A vector representing a coordinate giving the center of mass
-                of the paddle.
-        """
-        pass
 
     def check_win(self):
         """
