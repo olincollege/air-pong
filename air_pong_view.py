@@ -8,16 +8,40 @@ class PongView:
 
     def __init__(self):
         self.background_colour = (255, 255, 255)
-        self.UNIT_SCALING = 350
-        self.X_SHIFT = -200
-        self.Z_SHIFT = 200
+        self.unit_scaling = 350
+        self.x_shift = -200
+        self.z_shift = 200
         self.colour = (0, 0, 0)
-        self.THICKNESS = 1
-        # self.screen = pygame.display.set_mode((1200, 700))
+        self.thickness = 1
+        self.screen = pygame.display.set_mode((1200, 700))
 
     def display(self, pong_instance, screen):
         self.screen = screen
         screen.fill((self.background_colour))
+        # paddle
+        pygame.draw.rect(
+            screen,
+            (255, 0, 0),
+            (
+                self.unit_scaling * pong_instance._paddle_edges[0].x
+                + self.x_shift,
+                self.unit_scaling * pong_instance._paddle_edges[0].y
+                + self.z_shift,
+                self.unit_scaling * 0.016,
+                self.unit_scaling * pong_instance._paddle_width,
+            ),
+        )
+        # print("x0")
+        # print(
+        #     self.unit_scaling * pong_instance._paddle_edges[0].x + self.x_shift
+        # )
+        # print("y0")
+        # print(self.unit_scaling * pong_instance._paddle_edges[0].y)
+        # print("x1")
+        # print(self.unit_scaling * pong_instance._paddle_edges[1].x * 0.016)
+        # print("y1")
+        # print(self.unit_scaling * pong_instance._paddle_edges[1].y - 191)
+        # [vector(1, 0.55, 0), vector(1, 0.7, 0)]
         # ball
         pygame.draw.circle(
             screen,
@@ -27,12 +51,12 @@ class PongView:
                 17 * min(pong_instance.ball_spin.mag, 15),
             ),
             (
-                self.UNIT_SCALING * pong_instance.ball_position.x
-                + self.X_SHIFT,
-                self.UNIT_SCALING * pong_instance.ball_position.y
-                + self.Z_SHIFT,
+                self.unit_scaling * pong_instance.ball_position.x
+                + self.x_shift,
+                self.unit_scaling * pong_instance.ball_position.y
+                + self.z_shift,
             ),
-            self.UNIT_SCALING * pong_instance.ball_radius,
+            self.unit_scaling * pong_instance.ball_radius,
             # THICKNESS,
             width=0,
         )
@@ -41,10 +65,10 @@ class PongView:
             screen,
             (0, 0, 255),
             (
-                self.UNIT_SCALING * pong_instance.table_front + self.X_SHIFT,
-                self.UNIT_SCALING * pong_instance.table_dim.z + self.Z_SHIFT,
-                self.UNIT_SCALING * pong_instance.table_dim.x,
-                self.UNIT_SCALING * pong_instance.table_dim.z * 0.02,
+                self.unit_scaling * pong_instance.table_front + self.x_shift,
+                self.unit_scaling * pong_instance.table_dim.z + self.z_shift,
+                self.unit_scaling * pong_instance.table_dim.x,
+                self.unit_scaling * pong_instance.table_dim.z * 0.02,
             ),
         )
         # table net
@@ -52,14 +76,14 @@ class PongView:
             screen,
             self.colour,
             (
-                self.UNIT_SCALING
+                self.unit_scaling
                 * (pong_instance.table_front + pong_instance.table_dim.x / 2)
-                + self.X_SHIFT,
-                self.UNIT_SCALING * (pong_instance.table_dim.z)
-                - self.UNIT_SCALING * 0.1525
-                + self.Z_SHIFT,
-                self.UNIT_SCALING * 0.003,  # Width of the net
-                self.UNIT_SCALING * 0.1525,  # Height of the net
+                + self.x_shift,
+                self.unit_scaling * (pong_instance.table_dim.z)
+                - self.unit_scaling * 0.1525
+                + self.z_shift,
+                self.unit_scaling * 0.003,  # Width of the net
+                self.unit_scaling * 0.1525,  # Height of the net
             ),
         )
 
