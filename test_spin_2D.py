@@ -5,7 +5,7 @@ from vpython import vector
 background_colour = (255, 255, 255)
 UNIT_SCALING = 350
 X_SHIFT = -200
-Z_SHIFT = 200
+Z_SHIFT = 600
 colour = (0, 0, 0)
 THICKNESS = 1
 
@@ -20,7 +20,7 @@ def display(pong_instance):
         ),
         (
             UNIT_SCALING * pong_instance.ball_position.x + X_SHIFT,
-            UNIT_SCALING * pong_instance.ball_position.y + Z_SHIFT,
+            -UNIT_SCALING * pong_instance.ball_position.y + Z_SHIFT,
         ),
         UNIT_SCALING * pong_instance.ball_radius,
         # THICKNESS,
@@ -31,7 +31,7 @@ def display(pong_instance):
         255,
         (
             UNIT_SCALING * pong_instance.ball_position.x + X_SHIFT,
-            UNIT_SCALING * pong_instance.ball_position.y + Z_SHIFT,
+            -UNIT_SCALING * pong_instance.ball_position.y + Z_SHIFT,
         ),
         UNIT_SCALING * pong_instance.ball_radius,
         # THICKNESS,
@@ -42,7 +42,7 @@ def display(pong_instance):
         (0, 0, 255),
         (
             UNIT_SCALING * pong_instance.table_front + X_SHIFT,
-            UNIT_SCALING * pong_instance.table_dim.z + Z_SHIFT,
+            -UNIT_SCALING * pong_instance.table_dim.z + Z_SHIFT,
             UNIT_SCALING * pong_instance.table_dim.x,
             UNIT_SCALING * pong_instance.table_dim.z * 0.02,
         ),
@@ -54,7 +54,7 @@ def display(pong_instance):
             UNIT_SCALING
             * (pong_instance.table_front + pong_instance.table_dim.x / 2)
             + X_SHIFT,
-            UNIT_SCALING * (pong_instance.table_dim.z)
+            -UNIT_SCALING * (pong_instance.table_dim.z)
             - UNIT_SCALING * 0.1525
             + Z_SHIFT,
             UNIT_SCALING * 0.003,  # Width of the net
@@ -82,7 +82,7 @@ def display(pong_instance):
 
 screen = pygame.display.set_mode((1200, 700))
 pygame.display.set_caption("Tutorial 5")
-particle = PongModel()
+particle = PongModel(vector(1, -0.1, 0).hat, vector(1, 0.25, 0), 11)
 # particle.angle = vector.diff_angle(particle.ball_velocity, vector(1, 0, 0))
 
 running = True

@@ -46,7 +46,7 @@ class PongModel:
     _ball_mass = 0.0027
     _ball_radius = 0.02
     _time_step = 0.001
-    _acc_gravity = vector(0, 9.8, 0)
+    _acc_gravity = vector(0, -9.8, 0)
     # Constants to be adjusted
     _ball_rebound = 1
     _paddle_friction = 1
@@ -54,7 +54,7 @@ class PongModel:
     _paddle_stiff = 100
     _air_density = 1.19
     _drag_coefficient = 0.47
-    _lift_coefficient = 0.25
+    _lift_coefficient = 2.5
     _paddle_force = 0.5
 
     def __init__(self, paddle_normal, paddle_velocity, win_threshold):
@@ -67,13 +67,16 @@ class PongModel:
                 at a given moment.
             win_threshold - An integer designating how many points to play to.
         """
-        self._ball_position = vector(1.5, 0.65, 0)
-        self._ball_velocity = vector(-2, 0, 0)
+        self._ball_position = vector(1.5, 1, 0)
+        self._ball_velocity = vector(0, 0, 0)
         self._ball_spin = vector(0, 0, 0)
         self._angle = 0
         self._mag_force = vector(0, 0, 0)
         self._drag_force = vector(0, 0, 0)
-        self._paddle_edges = [vector(1, 0.55, 0), vector(1, 0.7, 0)]
+        self._paddle_edges = [
+            vector(1, PongModel._table_height, 0),
+            vector(1, PongModel._table_height + PongModel._paddle_width, 0),
+        ]
         self._player_coefficient = 1
         self._paddle_normal = paddle_normal
         self._paddle_velocity = paddle_velocity
@@ -123,13 +126,13 @@ class PongModel:
             and self._ball_position.x
             <= PongModel._table_front
             + PongModel._table_length
-            - PongModel._ball_radius
+            + PongModel._ball_radius
             and self._ball_position.y
-            >= PongModel._table_height - PongModel._ball_radius
+            <= PongModel._table_height + PongModel._ball_radius
         ):
             self._ball_velocity = vector.rotate(
                 self._ball_velocity,
-                angle=-2 * self._angle,
+                angle=2 * self._angle,
                 axis=vector(0, 0, 1),
             )
             _sp_angular_momentum = (
@@ -151,13 +154,23 @@ class PongModel:
         Updates the velocity vector and spin of the ball when it collides with the net.
         """
         if round(
-            self._ball_position.x + self._ball_radius, 3
-        ) == PongModel._table_front + round(PongModel._table_length / 2, 3):
+            self._ball_position.x
+            + self._player_coefficient * self._ball_radius,
+            2,
+        ) == PongModel._table_front + round(PongModel._table_length / 2, 2):
+            print("net.x")
             if (
                 self.ball_position.y
                 > PongModel._net_height + PongModel._table_height
             ):
                 self._ball_velocity = vector(0, 0, 0)
+                self._ball_position = (
+                    PongModel.table_front
+                    + PongModel._table_length
+                    - self._player_coefficient * self.ball_radius,
+                    self._ball_position.y,
+                    self._ball_position.z,
+                )
             elif (
                 self.ball_position.y + self._ball_radius
                 >= PongModel._net_height + PongModel._table_height
@@ -191,13 +204,14 @@ class PongModel:
         """
         self.hit_table()
         self.paddle_bounce()
+        self.hit_net()
         self._mag_force = self.compute_magnus_force()
-        # self._drag_force = self.compute_drag()
+        self._drag_force = self.compute_drag()
         self._drag_force = vector(0, 0, 0)
         self._ball_position += PongModel._time_step * self._ball_velocity
         self._ball_velocity += (
             PongModel._acc_gravity * PongModel._time_step
-            + (self._mag_force + self._drag_force)
+            + (self._mag_force - self._drag_force)
             * PongModel._time_step
             / PongModel._ball_mass
         )
@@ -261,7 +275,6 @@ class PongModel:
                 vector.proj(self._ball_velocity, self._paddle_normal).mag
             ) + abs(vector.proj(self._paddle_velocity, self._paddle_normal).mag)
             _cumm_time = 0
-            print(_spring_disp)
             # Define a cumulative time step because spring equation is deterministic not iterative.
             while (
                 _spring_disp.mag
@@ -295,9 +308,9 @@ class PongModel:
                         )
                     )
                 )
-                print(f"The position is {self._ball_position}")
-                print(f"The velocity is {self._ball_velocity}")
-                print(f"The elapsed time is {_cumm_time}")
+                # print(f"The position is {self._ball_position}")
+                # print(f"The velocity is {self._ball_velocity}")
+                # print(f"The elapsed time is {_cumm_time}")
 
     def check_win(self):
         """
