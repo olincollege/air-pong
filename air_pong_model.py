@@ -56,18 +56,17 @@ class PongModel:
     _drag_coefficient = 0.47
     _lift_coefficient = 2.5
     _paddle_force = 0.5
+    _bounce_count = 0
+    player1_serving = True
 
-    def __init__(
-        self, paddle_normal, paddle_velocity, paddle_position, win_threshold
-    ):
+    def __init__(self, win_threshold, serve_increment):
         """
         Define default ball state in time and space.
 
         Args:
-            paddle_normal - A unit vector representing the normal to the paddle.
-            paddle_force - An integer representing the force applied by the paddle
-                at a given moment.
             win_threshold - An integer designating how many points to play to.
+            serve_increment - An integer dictating the number of points before the
+                serve switches players.
         """
         self._ball_position = vector(
             PongModel._table_front, PongModel._table_height + 0.3, 0
@@ -79,11 +78,12 @@ class PongModel:
         self._drag_force = vector(0, 0, 0)
         self._paddle_edges = []
         self._player_coefficient = 1
-        self._paddle_normal = paddle_normal
-        self._paddle_velocity = paddle_velocity
-        self._paddle_position = paddle_position
+        self._paddle_normal = vector(1, 0, 0)
+        self._paddle_velocity = vector(0, 0, 0)
+        self._paddle_position = vector(0, 0, 0)
         self._player_score = (0, 0)
         self._win_threshold = win_threshold
+        self._serve_increment = serve_increment
 
     def compute_magnus_force(self):
         """
@@ -130,7 +130,8 @@ class PongModel:
             + PongModel._table_length
             + PongModel._ball_radius
             and self._ball_position.y
-            <= PongModel._table_height + PongModel._ball_radius
+            <= PongModel._table_height + PongModel._ball_radius + 0.001
+            # Actual magic number above. Fixes everything and I don't know why.
         ):
             print("table bounce")
             self._ball_velocity = PongModel._ball_rebound * vector.rotate(
@@ -138,6 +139,7 @@ class PongModel:
                 angle=2 * self._angle,
                 axis=vector(0, 0, 1),
             )
+            print(self._ball_velocity)
             _sp_angular_momentum = (
                 vector.cross(-self._ball_spin, vector(0, -1, 0))
                 * self._ball_radius**2
@@ -150,6 +152,13 @@ class PongModel:
                 * vector.cross(_sp_angular_momentum, vector(0, 1, 0))
                 / self._ball_radius**2
             )
+            if (
+                self._ball_position.x
+                <= self.table_front + self._table_length / 2
+            ):
+                PongModel._bounce_count += 1
+            else:
+                PongModel._bounce_count -= 1
         self._angle = vector.diff_angle(self._ball_velocity, vector(1, 0, 0))
 
     def hit_net(self):
@@ -219,9 +228,14 @@ class PongModel:
             + (self._mag_force + self._drag_force) / PongModel._ball_mass
         ) * PongModel._time_step
 
-    def update_paddle(self, paddle_normal, paddle_position, paddle_velocity):
+    def update_paddle(
+        self,
+        paddle_normal,
+        paddle_position,
+        paddle_velocity,
+    ):
         """
-        Determines whether the ball is in contact with the paddle.
+        Updates instance attributes encoding the paddle's state.
 
         Args:
             paddle_normal - A vector representing the unit normal vector to the paddle.
@@ -381,9 +395,29 @@ class PongModel:
                 # print(f"The velocity is {self._ball_velocity}")
                 # print(f"The elapsed time is {_cumm_time}")
 
+    def check_point(self):
+        """
+        Method for updating the 'player_score' 'player_serving attributes.
+        """
+        if PongModel._bounce_count == 2:
+            self._player_score = (
+                self._player_score[0] + 1,
+                self._player_score[1],
+            )
+            if self._player_score % self._serve_increment == 0:
+                PongModel.player1_serving = not (PongModel.player1_serving)
+
+        if PongModel._bounce_count == -1:
+            self._player_score = (
+                self._player_score[0],
+                self._player_score[1] + 1,
+            )
+            if self._player_score % self._serve_increment == 0:
+                PongModel.player1_serving = not (PongModel.player1_serving)
+
     def check_win(self):
         """
-        Method for determining if the player has won.
+        Method for determining if a player has won.
 
         Returns:
             An integer corresponding to the winning player or boolean False otherwise.
@@ -429,5 +463,5 @@ class PongModel:
         return self._paddle_edges
 
     @property
-    def paddle_normal(self):
-        return self._paddle_normal
+    def player_score(self):
+        return self._player_score
