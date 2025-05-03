@@ -82,7 +82,7 @@ def display(pong_instance):
 
 screen = pygame.display.set_mode((1200, 700))
 pygame.display.set_caption("Tutorial 5")
-particle = PongModel(vector(1, -0.1, 0).hat, vector(1, 0.25, 0), 11)
+particle = PongModel(2, 11)
 # particle.angle = vector.diff_angle(particle.ball_velocity, vector(1, 0, 0))
 
 running = True
@@ -91,6 +91,9 @@ while running:
         if event.type == pygame.QUIT:
             running = False
     screen.fill(background_colour)
+    particle.update_paddle(
+        vector(1, 0.4, 0).hat, vector(1, 0.86, 0), vector(0.3, 0.4699, 0)
+    )
     particle.trajectory()
     display(particle)
     # print(particle._ball_spin.mag)
