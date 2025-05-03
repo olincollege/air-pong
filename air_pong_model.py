@@ -48,7 +48,7 @@ class PongModel:
     _time_step = 0.001
     _acc_gravity = vector(0, -9.8, 0)
     # Constants to be adjusted
-    _ball_rebound = 1
+    _ball_rebound = 0.97
     _paddle_friction = 1
     _table_friction = 0.75
     _paddle_stiff = 100
@@ -57,7 +57,9 @@ class PongModel:
     _lift_coefficient = 2.5
     _paddle_force = 0.5
 
-    def __init__(self, paddle_normal, paddle_velocity, win_threshold):
+    def __init__(
+        self, paddle_normal, paddle_velocity, paddle_position, win_threshold
+    ):
         """
         Define default ball state in time and space.
 
@@ -67,19 +69,19 @@ class PongModel:
                 at a given moment.
             win_threshold - An integer designating how many points to play to.
         """
-        self._ball_position = vector(1.5, 1, 0)
+        self._ball_position = vector(
+            PongModel._table_front - 0.04, PongModel._table_height + 0.14, 0
+        )
         self._ball_velocity = vector(0, 0, 0)
         self._ball_spin = vector(0, 0, 0)
         self._angle = 0
         self._mag_force = vector(0, 0, 0)
         self._drag_force = vector(0, 0, 0)
-        self._paddle_edges = [
-            vector(1, PongModel._table_height, 0),
-            vector(1, PongModel._table_height + PongModel._paddle_width, 0),
-        ]
+        self._paddle_edges = []
         self._player_coefficient = 1
         self._paddle_normal = paddle_normal
         self._paddle_velocity = paddle_velocity
+        self._paddle_position = paddle_position
         self._player_score = (0, 0)
         self._win_threshold = win_threshold
 
@@ -107,9 +109,9 @@ class PongModel:
             0.5
             * PongModel._air_density
             * vector(
-                self._ball_velocity.x**2,
-                self._ball_velocity.y**2,
-                self._ball_velocity.z**2,
+                -self._ball_velocity.hat.x * self._ball_velocity.x**2,
+                -self._ball_velocity.hat.y * self._ball_velocity.y**2,
+                -self._ball_velocity.hat.z * self._ball_velocity.z**2,
             )
             * PongModel._drag_coefficient
             * np.pi
@@ -130,7 +132,7 @@ class PongModel:
             and self._ball_position.y
             <= PongModel._table_height + PongModel._ball_radius
         ):
-            self._ball_velocity = vector.rotate(
+            self._ball_velocity = PongModel._ball_rebound * vector.rotate(
                 self._ball_velocity,
                 angle=2 * self._angle,
                 axis=vector(0, 0, 1),
@@ -207,14 +209,11 @@ class PongModel:
         self.hit_net()
         self._mag_force = self.compute_magnus_force()
         self._drag_force = self.compute_drag()
-        self._drag_force = vector(0, 0, 0)
         self._ball_position += PongModel._time_step * self._ball_velocity
         self._ball_velocity += (
-            PongModel._acc_gravity * PongModel._time_step
-            + (self._mag_force - self._drag_force)
-            * PongModel._time_step
-            / PongModel._ball_mass
-        )
+            PongModel._acc_gravity
+            + (self._mag_force + self._drag_force) / PongModel._ball_mass
+        ) * PongModel._time_step
 
     def update_paddle(self, paddle_normal, paddle_position, paddle_velocity):
         """
@@ -229,32 +228,104 @@ class PongModel:
         """
         self._paddle_normal = paddle_normal
         self._paddle_velocity = paddle_velocity
+        self._paddle_position = paddle_position
         self._paddle_edges = [
             paddle_position
             + vector.rotate(
                 PongModel._paddle_width / 2 * paddle_normal,
-                angle=90,
+                angle=np.pi / 2,
                 axis=vector(0, 0, 1),
             ),
             paddle_position
             - vector.rotate(
                 PongModel._paddle_width / 2 * paddle_normal,
-                angle=90,
+                angle=np.pi / 2,
                 axis=vector(0, 0, 1),
             ),
         ]
+        self._paddle_edges = [
+            [
+                self._paddle_edges[0].x,
+                self._paddle_edges[0].y,
+                self._paddle_edges[0].z,
+            ],
+            [
+                self._paddle_edges[1].x,
+                self._paddle_edges[1].y,
+                self._paddle_edges[1].z,
+            ],
+        ]
+
+    def hit_or_miss(self):
+        """
+        Method to determine whether the ball hits or misses the paddle at any given
+        moment.
+
+        Returns:
+            A boolean, True if the ball hits the paddle and False otherwise.
+        """
         _horizontal_factor = vector.rotate(
-            vector.norm(vector(paddle_normal.x, 0, paddle_normal.z)),
+            vector.norm(
+                vector(
+                    self._paddle_normal.x,
+                    0,
+                    self._paddle_normal.z,
+                )
+            ),
             angle=np.pi / 2,
             axis=vector(0, 1, 0),
         )
         _vertical_factor = vector.rotate(
-            _horizontal_factor, angle=np.pi / 2, axis=paddle_normal
+            _horizontal_factor,
+            angle=np.pi / 2,
+            axis=(self._paddle_normal),
         )
         _change_basis = np.array(
-            [paddle_normal.x, _vertical_factor.x, _horizontal_factor.x],
-            [paddle_normal.y, _vertical_factor.y, _horizontal_factor.y],
-            [paddle_normal.z, _vertical_factor.z, _horizontal_factor.z],
+            [
+                [
+                    self._paddle_normal.x,
+                    _vertical_factor.x,
+                    _horizontal_factor.x,
+                ],
+                [
+                    self._paddle_normal.y,
+                    _vertical_factor.y,
+                    _horizontal_factor.y,
+                ],
+                [
+                    self._paddle_normal.z,
+                    _vertical_factor.z,
+                    _horizontal_factor.z,
+                ],
+            ]
+        )
+        # print(type(self._paddle_edges))
+        # print(np.array(self._paddle_edges))
+        # print(_change_basis)
+        self._paddle_edges = np.transpose(
+            np.linalg.inv(_change_basis)
+            @ np.transpose(np.array(self._paddle_edges))
+        )
+        self._ball_position = np.transpose(
+            np.linalg.inv(_change_basis)
+            @ np.transpose(
+                np.array(
+                    [
+                        self._ball_position.x,
+                        self._ball_position.y,
+                        self._ball_position.z,
+                    ]
+                )
+            )
+        )
+        return (
+            round(self._ball_position[1], 4)
+            <= round(self._paddle_edges[0][1], 4)
+            and round(self._ball_position[1], 4)
+            >= round(self._paddle_edges[1][1], 4)
+            and round(self._paddle_edges[0][0], 3)
+            >= self._ball_position[0]
+            - self._player_coefficient * PongModel._ball_radius
         )
 
     def paddle_bounce(self):
@@ -262,14 +333,7 @@ class PongModel:
         Base method for updating the ball state after hitting a paddle,
         given a velocity and spin for the ball and a velocity and angle for the paddle.
         """
-        if (
-            self._player_coefficient
-            * (self._ball_position.x - PongModel._ball_radius)
-            <= self._player_coefficient * self._paddle_edges[0].x
-            and self._paddle_edges[0].y
-            <= self._ball_position.y
-            <= self._paddle_edges[1].y
-        ):
+        if self.hit_or_miss() == True:
             _spring_disp = vector.proj(self._ball_position, self._paddle_normal)
             _initial_velocity = abs(
                 vector.proj(self._ball_velocity, self._paddle_normal).mag
