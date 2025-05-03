@@ -70,7 +70,7 @@ class PongModel:
             win_threshold - An integer designating how many points to play to.
         """
         self._ball_position = vector(
-            PongModel._table_front - 0.04, PongModel._table_height + 0.14, 0
+            PongModel._table_front, PongModel._table_height + 0.3, 0
         )
         self._ball_velocity = vector(0, 0, 0)
         self._ball_spin = vector(0, 0, 0)
@@ -132,6 +132,7 @@ class PongModel:
             and self._ball_position.y
             <= PongModel._table_height + PongModel._ball_radius
         ):
+            print("table bounce")
             self._ball_velocity = PongModel._ball_rebound * vector.rotate(
                 self._ball_velocity,
                 angle=2 * self._angle,
@@ -160,23 +161,26 @@ class PongModel:
             + self._player_coefficient * self._ball_radius,
             2,
         ) == PongModel._table_front + round(PongModel._table_length / 2, 2):
-            print("net.x")
             if (
-                self.ball_position.y
-                > PongModel._net_height + PongModel._table_height
+                self._ball_position.y
+                < PongModel._net_height + PongModel._table_height
             ):
-                self._ball_velocity = vector(0, 0, 0)
-                self._ball_position = (
-                    PongModel.table_front
-                    + PongModel._table_length
-                    - self._player_coefficient * self.ball_radius,
-                    self._ball_position.y,
-                    self._ball_position.z,
+                self._ball_velocity = vector(
+                    -0.1 * self._player_coefficient, 0, 0
                 )
+                # self._ball_position = vector(
+                #     PongModel._table_front
+                #     + PongModel._table_length
+                #     - self._player_coefficient * self.ball_radius,
+                #     self._ball_position.y,
+                #     self._ball_position.z,
+                # )
+                print("net bounce")
             elif (
                 self.ball_position.y + self._ball_radius
-                >= PongModel._net_height + PongModel._table_height
+                <= PongModel._net_height + PongModel._table_height
             ):
+                print("let")
                 self._ball_velocity = vector.rotate(
                     2
                     * np.arcsin(
@@ -299,32 +303,31 @@ class PongModel:
                 ],
             ]
         )
-        # print(type(self._paddle_edges))
-        # print(np.array(self._paddle_edges))
-        # print(_change_basis)
-        self._paddle_edges = np.transpose(
+        _paddle_edges_check = np.transpose(
             np.linalg.inv(_change_basis)
-            @ np.transpose(np.array(self._paddle_edges))
+            @ np.transpose(np.array(self.paddle_edges))
         )
-        self._ball_position = np.transpose(
+        _ball_position_check = np.transpose(
             np.linalg.inv(_change_basis)
             @ np.transpose(
                 np.array(
                     [
-                        self._ball_position.x,
-                        self._ball_position.y,
-                        self._ball_position.z,
+                        self.ball_position.x,
+                        self.ball_position.y,
+                        self.ball_position.z,
                     ]
                 )
             )
         )
+        # print(_paddle_edges_check)
+        # print(_ball_position_check)
         return (
-            round(self._ball_position[1], 4)
-            <= round(self._paddle_edges[0][1], 4)
-            and round(self._ball_position[1], 4)
-            >= round(self._paddle_edges[1][1], 4)
-            and round(self._paddle_edges[0][0], 3)
-            >= self._ball_position[0]
+            round(_ball_position_check[1], 4)
+            <= round(_paddle_edges_check[0][1], 4)
+            and round(_ball_position_check[1], 4)
+            >= round(_paddle_edges_check[1][1], 4)
+            and round(_paddle_edges_check[0][0], 3)
+            >= _ball_position_check[0]
             - self._player_coefficient * PongModel._ball_radius
         )
 
@@ -333,7 +336,9 @@ class PongModel:
         Base method for updating the ball state after hitting a paddle,
         given a velocity and spin for the ball and a velocity and angle for the paddle.
         """
-        if self.hit_or_miss() == True:
+        _hit_paddle = bool(self.hit_or_miss())
+        if _hit_paddle is True:
+            print("paddle bounce")
             _spring_disp = vector.proj(self._ball_position, self._paddle_normal)
             _initial_velocity = abs(
                 vector.proj(self._ball_velocity, self._paddle_normal).mag
@@ -418,3 +423,7 @@ class PongModel:
     @property
     def ball_spin(self):
         return self._ball_spin
+
+    @property
+    def paddle_edges(self):
+        return self._paddle_edges
