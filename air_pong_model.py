@@ -427,3 +427,7 @@ class PongModel:
     @property
     def paddle_edges(self):
         return self._paddle_edges
+
+    @property
+    def paddle_normal(self):
+        return self._paddle_normal
