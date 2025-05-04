@@ -49,7 +49,7 @@ class PongModel:
     _acc_gravity = vector(0, -9.8, 0)
     # Constants to be adjusted
     _ball_rebound = 0.97
-    _paddle_friction = 1
+    _paddle_friction = 0.95
     _table_friction = 0.75
     _paddle_stiff = 100
     _air_density = 1.19
@@ -58,6 +58,7 @@ class PongModel:
     _paddle_force = 0.5
     _bounce_count = 0
     player1_serving = True
+    _current_bounce = 0
 
     def __init__(self, win_threshold, serve_increment):
         """
@@ -79,7 +80,6 @@ class PongModel:
         self._paddle_edges = [
             (vector(1, 0.4, 0)),
         ]
-        self._player_coefficient = 1
         self._paddle_normal = vector(1, 0, 0)
         self._paddle_velocity = vector(0, 0, 0)
         self._paddle_position = vector(0, 0, 0)
@@ -132,16 +132,14 @@ class PongModel:
             + PongModel._table_length
             + PongModel._ball_radius
             and self._ball_position.y
-            <= PongModel._table_height + PongModel._ball_radius + 0.001
-            # Actual magic number above. Fixes everything and I don't know why.
+            < PongModel._table_height + PongModel._ball_radius
         ):
-            print("table bounce")
+            self._ball_position += vector(0, 0.0001, 0)
             self._ball_velocity = PongModel._ball_rebound * vector.rotate(
                 self._ball_velocity,
                 angle=2 * self._angle,
                 axis=vector(0, 0, 1),
             )
-            print(self._ball_velocity)
             _sp_angular_momentum = (
                 vector.cross(-self._ball_spin, vector(0, -1, 0))
                 * self._ball_radius**2
@@ -154,10 +152,7 @@ class PongModel:
                 * vector.cross(_sp_angular_momentum, vector(0, 1, 0))
                 / self._ball_radius**2
             )
-            if (
-                self._ball_position.x
-                <= self.table_front + self._table_length / 2
-            ):
+            if self.player_coefficient() == 1:
                 PongModel._bounce_count += 1
             else:
                 PongModel._bounce_count -= 1
@@ -169,7 +164,7 @@ class PongModel:
         """
         if round(
             self._ball_position.x
-            + self._player_coefficient * self._ball_radius,
+            + self.player_coefficient() * self._ball_radius,
             2,
         ) == PongModel._table_front + round(PongModel._table_length / 2, 2):
             if (
@@ -177,41 +172,36 @@ class PongModel:
                 < PongModel._net_height + PongModel._table_height
             ):
                 self._ball_velocity = vector(
-                    -0.1 * self._player_coefficient, 0, 0
+                    -0.1 * self.player_coefficient(), 0, 0
                 )
-                # self._ball_position = vector(
-                #     PongModel._table_front
-                #     + PongModel._table_length
-                #     - self._player_coefficient * self.ball_radius,
-                #     self._ball_position.y,
-                #     self._ball_position.z,
-                # )
                 print("net bounce")
             elif (
-                self.ball_position.y + self._ball_radius
+                self.ball_position.y - self._ball_radius
                 <= PongModel._net_height + PongModel._table_height
+                and PongModel._current_bounce != PongModel._bounce_count
             ):
                 print("let")
+                PongModel._current_bounce = PongModel._bounce_count
                 self._ball_velocity = vector.rotate(
                     2
                     * np.arcsin(
                         (
-                            self.ball_position.y
+                            self._ball_position.y
                             - PongModel._net_height
                             - PongModel._table_height
                         )
-                        / PongModel.ball_radius
+                        / PongModel._ball_radius
                     )
                     / np.pi
                     * self._ball_velocity,
                     axis=vector(0, 0, 1) + self._ball_spin,
                     angle=np.arccos(
                         (
-                            self.ball_position.y
+                            self._ball_position.y
                             - PongModel._net_height
                             - PongModel._table_height
                         )
-                        / PongModel.ball_radius
+                        / PongModel._ball_radius
                     ),
                 )
 
@@ -229,6 +219,7 @@ class PongModel:
             PongModel._acc_gravity
             + (self._mag_force + self._drag_force) / PongModel._ball_mass
         ) * PongModel._time_step
+        print(self._ball_spin)
 
     def update_paddle(
         self,
@@ -344,7 +335,7 @@ class PongModel:
             >= round(_paddle_edges_check[1][1], 4)
             and round(_paddle_edges_check[0][0], 3)
             >= _ball_position_check[0]
-            - self._player_coefficient * PongModel._ball_radius
+            - self.player_coefficient() * PongModel._ball_radius
         )
 
     def paddle_bounce(self):
@@ -354,34 +345,49 @@ class PongModel:
         """
         _hit_paddle = bool(self.hit_or_miss())
         if _hit_paddle is True:
-            print("paddle bounce")
             _spring_disp = vector.proj(self._ball_position, self._paddle_normal)
             _initial_velocity = abs(
                 vector.proj(self._ball_velocity, self._paddle_normal).mag
             ) + abs(vector.proj(self._paddle_velocity, self._paddle_normal).mag)
             _cumm_time = 0
             # Define a cumulative time step because spring equation is deterministic not iterative.
+            _parallel_velocity = self._ball_radius * vector.cross(
+                self._ball_spin, self._paddle_normal
+            ) + vector.proj(
+                self._paddle_velocity,
+                vector.rotate(
+                    self._paddle_normal, axis=vector(0, 0, 1), angle=np.pi / 2
+                ),
+            )
+            print(f"the parallel velocity is {_parallel_velocity}")
             while (
                 _spring_disp.mag
                 >= vector.proj(
-                    self._player_coefficient * self._ball_position,
+                    self.player_coefficient() * self._ball_position,
                     self._paddle_normal,
                 ).mag
             ):
                 _cumm_time += PongModel._time_step / 10
-                self._ball_position += self._paddle_normal * (
-                    0.5
-                    * PongModel._paddle_force
-                    / PongModel._ball_mass
-                    * _cumm_time**2
-                    - _initial_velocity
-                    / np.sqrt(PongModel._paddle_stiff / PongModel._ball_mass)
+                _spring_acc = (
+                    _initial_velocity
+                    / (
+                        (PongModel._paddle_stiff / PongModel._ball_mass)
+                        ** (3 / 2)
+                    )
                     * np.sin(
                         _cumm_time
                         * np.sqrt(
                             PongModel._paddle_stiff / PongModel._ball_mass
                         )
                     )
+                )
+                self._ball_position += self._paddle_normal * (
+                    0.5
+                    * PongModel._paddle_force
+                    / PongModel._ball_mass
+                    * _cumm_time**2
+                    - _spring_acc
+                    * (PongModel._paddle_stiff / PongModel._ball_mass)
                 )
                 self._ball_velocity = -self._paddle_normal * (
                     -PongModel._paddle_force / PongModel._ball_mass * _cumm_time
@@ -392,6 +398,23 @@ class PongModel:
                             PongModel._paddle_stiff / PongModel._ball_mass
                         )
                     )
+                )
+                _parallel_velocity -= _parallel_velocity.hat * (
+                    PongModel._paddle_friction
+                    * (PongModel._paddle_force / self._ball_mass + _spring_acc)
+                    * PongModel._time_step
+                )
+
+                self._ball_spin = vector(
+                    0,
+                    0,
+                    (
+                        _parallel_velocity.mag
+                        - vector.proj(
+                            self._paddle_velocity, self._paddle_normal
+                        ).mag
+                    )
+                    / self._ball_radius,
                 )
                 # print(f"The position is {self._ball_position}")
                 # print(f"The velocity is {self._ball_velocity}")
@@ -435,6 +458,33 @@ class PongModel:
         ):
             return 2
         return False
+
+    def player_coefficient(self):
+        """
+        Returns integers -1 or 1 depending on which side of the table
+        the ball is on: -1 for right and 1 for left.
+        """
+        if (
+            self._ball_position.x
+            < PongModel._table_front + PongModel._table_length / 2
+        ):
+            return 1
+        return -1
+
+    def serve(self):
+        """
+        Initiate a serve consisting of a predefined initial ball position
+        and velocity.
+        """
+        _serving_position = PongModel._table_front - 0.05
+        if self.player1_serving is False:
+            _serving_position = (
+                PongModel._table_front + PongModel._table_length + 0.05
+            )
+        self._ball_position = vector(
+            _serving_position, PongModel._table_height, 0
+        )
+        self._ball_velocity = vector(0, 2, 0)
 
     @property
     def ball_position(self):
