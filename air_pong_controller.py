@@ -55,6 +55,7 @@ class PongController:
         creates the videocapture element.
         """
         cap = cv2.VideoCapture(0)
+        time.sleep(0.5)
         if cap.isOpened():
             return cap
         elif attempt == 10:
