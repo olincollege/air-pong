@@ -88,18 +88,6 @@ class PongView:
                 ),
             ),
         )
-        print(pong_instance.paddle_edges)
-        # table
-        # ping_pong_table = pygame.image.load(
-        #     "models/ping_pong_table_low_res.png"
-        # )
-        # ping_pong_table = pygame.transform.scale(
-        #     ping_pong_table,
-        #     (
-        #         self.unit_scaling * pong_instance.table_dim.x,
-        #         self.unit_scaling * pong_instance.table_dim.z,
-        #     ),
-        # )
         screen.blit(
             self.ping_pong_table,
             (
@@ -122,37 +110,3 @@ class PongView:
                 self.unit_scaling * 0.1525,  # Height of the net
             ),
         )
-
-        # pygame.draw.line(
-        #     screen,
-        #     colour,
-        #     (pong_instance.ball_position.x, pong_instance.ball_position.y),
-        #     (pong_instance._ball_spin.x, pong_instance._ball_spin.y),
-        #     #     (pong_instance.ball_position.x, pong_instance.ball_position.y),
-        #     #     (
-        #     #         (
-        #     #             100000 * pong_instance._mag_force.x
-        #     #             + pong_instance.ball_position.x
-        #     #         ),
-        #     #         (
-        #     #             100000 * pong_instance._mag_force.y
-        #     #             + pong_instance.ball_position.y
-        #     #         ),
-        #     #     ),
-        # )
-
-    # def render(self):
-    #     pygame.display.set_caption("Tutorial 5")
-    #     particle = PongModel()
-    #     # particle.angle = vector.diff_angle(particle.ball_velocity, vector(1, 0, 0))
-
-    #     running = True
-    #     while running:
-    #         for event in pygame.event.get():
-    #             if event.type == pygame.QUIT:
-    #                 running = False
-    #         self.screen.fill(self.background_colour)
-    #         particle.trajectory()
-    #         PongView.display(self, particle)
-    #         print(particle.ball_spin.mag)
-    #         pygame.display.flip()
