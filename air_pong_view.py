@@ -63,27 +63,27 @@ class PongView:
             (255, 0, 0),
             (
                 (
-                    self.unit_scaling * pong_instance.paddle_edges[0][0]
+                    self.unit_scaling * pong_instance.paddle_edges[0][0][0]
                     + self.x_shift,
-                    -self.unit_scaling * pong_instance.paddle_edges[0][1]
+                    -self.unit_scaling * pong_instance.paddle_edges[0][0][1]
                     + self.z_shift,
                 ),
                 (
-                    self.unit_scaling * pong_instance.paddle_edges[1][0]
+                    self.unit_scaling * pong_instance.paddle_edges[0][1][0]
                     + self.x_shift,
-                    -self.unit_scaling * pong_instance.paddle_edges[0][1]
+                    -self.unit_scaling * pong_instance.paddle_edges[0][0][1]
                     + self.z_shift,
                 ),
                 (
-                    self.unit_scaling * pong_instance.paddle_edges[0][0]
+                    self.unit_scaling * pong_instance.paddle_edges[0][0][0]
                     + self.x_shift,
-                    -self.unit_scaling * pong_instance.paddle_edges[0][1]
+                    -self.unit_scaling * pong_instance.paddle_edges[0][0][1]
                     + self.z_shift,
                 ),
                 (
-                    self.unit_scaling * pong_instance.paddle_edges[1][0]
+                    self.unit_scaling * pong_instance.paddle_edges[0][1][0]
                     + self.x_shift,
-                    -self.unit_scaling * pong_instance.paddle_edges[1][1]
+                    -self.unit_scaling * pong_instance.paddle_edges[0][1][1]
                     + self.z_shift,
                 ),
             ),
