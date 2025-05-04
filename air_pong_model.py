@@ -471,3 +471,7 @@ class PongModel:
     @property
     def paddle_normal(self):
         return self._paddle_normal
+
+    @property
+    def paddle_position(self):
+        return self._paddle_position
