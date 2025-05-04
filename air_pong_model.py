@@ -35,7 +35,14 @@ class PongModel:
             sphere.
         lift_coefficient - Float representing the coefficient of lift of a
             ping pong ball.
-        paddle_force - The force applied by a player wielding their paddle (N).
+        paddle_force - A float equal to the force applied by a player wielding
+        their paddle (N).
+        bounce_count - An integer keeping track of the number of bounces on
+        each side.
+        player1_serving - A boolean indicating whether it is player 1's serve.
+        False indicates that it is player 2's serve.
+        current_bounce - An integer equal to the bounce_count when the ball
+        last hit the net.
     """
 
     # All variables use base SI units.
@@ -77,23 +84,32 @@ class PongModel:
         self._angle = 0
         self._mag_force = vector(0, 0, 0)
         self._drag_force = vector(0, 0, 0)
-        self._paddle_edges = [
-            [],
-            [],
-        ]
-        self._paddle_edges_pair = [
-            [[], []],
-            [[], []],
-        ]
-        self._paddle_normal = vector(1, 0, 0)
         self._paddle_normal_pair = [vector(1, 0, 0), vector(-1, 0, 0)]
-        self._paddle_velocity = vector(0, 0, 0)
+        self._paddle_normal = self._paddle_normal_pair[0]
         self._paddle_velocity_pair = [vector(0, 0, 0), vector(0, 0, 0)]
-        self._paddle_position = vector(0, 0, 0)
-        self._paddle_position_pair = [vector(0, 0, 0), vector(0, 0, 0)]
+        self._paddle_velocity = self._paddle_velocity_pair[0]
+        self._paddle_position_pair = [
+            vector(
+                PongModel._table_front - 0.05,
+                PongModel._table_height,
+                0,
+            ),
+            # Start 5cm away from edge so as not to interfere with serve.
+            vector(
+                PongModel._table_front + PongModel._table_length + 0.05,
+                PongModel._table_height,
+                0,
+            ),
+        ]
+        self._paddle_position = self._paddle_position_pair[0]
+        self._paddle_edges_pair = [[[], []], [[], []]]
         self._player_score = (0, 0)
         self._win_threshold = win_threshold
         self._serve_increment = serve_increment
+        self.update_paddle(
+            self._paddle_normal, self._paddle_position, self._paddle_velocity, 0
+        )
+        self._paddle_edges = self._paddle_edges_pair[0]
 
     def compute_magnus_force(self):
         """
@@ -277,7 +293,7 @@ class PongModel:
 
     def hit_or_miss(self):
         """
-        Method to determine whether the ball hits or misses the paddle at any given
+        Method to determine whether the ball hits or misses a paddle at any given
         moment.
 
         Returns:
@@ -368,7 +384,6 @@ class PongModel:
                     self._paddle_normal, axis=vector(0, 0, 1), angle=np.pi / 2
                 ),
             )
-            print(f"the parallel velocity is {_parallel_velocity}")
             while (
                 _spring_disp.mag
                 >= vector.proj(
@@ -437,7 +452,7 @@ class PongModel:
 
     def check_point(self):
         """
-        Method for updating the 'player_score' 'player_serving attributes.
+        Method for updating the 'player_score' and 'player1_serving' attributes.
         """
         if PongModel._bounce_count == 2:
             self._player_score = (
