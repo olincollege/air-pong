@@ -39,8 +39,8 @@ class PongModel:
     """
 
     # All variables use base SI units.
-    (_table_length, _table_width, _table_height) = (2.74, 1.525, 0.76)
-    (_paddle_width, paddle_length) = (0.15, 0.17)
+    _table_length, _table_width, _table_height = 2.74, 1.525, 0.76
+    _paddle_width, paddle_length = 0.15, 0.17
     _net_height = 0.1525
     _table_front = 1
     _ball_mass = 0.0027
@@ -76,7 +76,9 @@ class PongModel:
         self._angle = 0
         self._mag_force = vector(0, 0, 0)
         self._drag_force = vector(0, 0, 0)
-        self._paddle_edges = []
+        self._paddle_edges = [
+            (vector(1, 0.4, 0)),
+        ]
         self._player_coefficient = 1
         self._paddle_normal = vector(1, 0, 0)
         self._paddle_velocity = vector(0, 0, 0)
@@ -465,3 +467,7 @@ class PongModel:
     @property
     def player_score(self):
         return self._player_score
+
+    @property
+    def paddle_normal(self):
+        return self._paddle_normal

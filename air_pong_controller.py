@@ -22,6 +22,7 @@ class PongController:
             player: a boolean, False = player 1 and True = player 2
             hand: the hand assigned to the player
         """
+        self._model = model
         self._player = player
         self._previous_position = None
         # keyboard listener
@@ -40,61 +41,81 @@ class PongController:
         self.cap = cv2.VideoCapture(0)
 
     def on_press(self, key):
-        """check if key is pressed pynput"""
+        """
+        check if key is pressed with pynput
+
+        Args:
+            key: a pynput key object representing the key pressed
+        """
 
         self._latest_key = key
         if self._player == 1:
             # check player one keyboard inputs
             if key == keyboard.Key.up:
-                print(f"up's been pressed {key}")  ## ADD MODEL CONTROL
-            elif key == keyboard.Key.down:
-                print(f"down's been pressed {key}")  ## ADD MODEL CONTROL
+                print(f"key {key} pressed")
+                # self._model.serve()
+                # Serve ball
+                no = None
             elif key == keyboard.Key.left:
-                print(f"left's been pressed {key}")  ## ADD MODEL CONTROL
+                print(f"key {key} pressed")
+                # Get normal vector and rotate it left
+                norm = self._model.paddle_normal
+                new_norm = 5
+                # self._model.update_paddle(paddle_normal=new_norm)
             elif key == keyboard.Key.right:
-                print(f"right's been pressed {key}")  ## ADD MODEL CONTROL
+                print(f"key {key} pressed")
+                norm = self._model.paddle_normal
+                new_norm = 5
+                # self._model.update_paddle(paddle_normal=new_norm)
         elif self._player == 2:
             # check player two keyboard inputs
             if key == keyboard.KeyCode.from_char("w"):
-                print(f"w's been pressed {key}")  ## ADD MODEL CONTROL
-            elif key == keyboard.KeyCode.from_char("s"):
-                print(f"down's been pressed {key}")  ## ADD MODEL CONTROL
+                print(f"key {key} pressed")
+                # Serve ball
+                # self._model.serve()
+                no = None
             elif key == keyboard.KeyCode.from_char("a"):
-                print(f"left's been pressed {key}")  ## ADD MODEL CONTROL
+                print(f"key {key} pressed")
+                # Get normal vector and rotate it left
+                norm = self._model.paddle_normal
+                new_norm = 5
+                # self._model.update_paddle(paddle_normal=new_norm)
             elif key == keyboard.KeyCode.from_char("d"):
-                print(f"right's been pressed {key}")  ## ADD MODEL CONTROL
+                print(f"key {key} pressed")
+                # Get normal vector and rotate it right
+                norm = self._model.paddle_normal
+                new_norm = 5
+                # self._model.update_paddle(paddle_normal=new_norm)
 
-    def on_release(self, key, injected):
+    def on_release(self, key):
         """check if key is released"""
         self._latest_key = None
         if key == keyboard.Key.esc:
             # Stop listener
             print("wants to end")
 
-    def get_hand(self):
+    def update_hand(self):
         """
-        Returns the hand inputs from mediapipe after some processing.
+        Create the hand for the
 
         Returns:
             pos: a vpython vector representing the xyz position of hand
             vel: a vpython vector of velocity in m/s
             angle: a vpython normal vector to the center joint of palm
         """
+        self.hand_cv()
+
         MIDDLE_FINGER_MCP = 9
-        INDEX_FINGER_MCP = 5
-        PINKY_FINGER_MCP = 17
         DEL_TIME = 1 / 30
         empty_landmark = mp.tasks.vision.HandLandmarkerResult(
             handedness=[], hand_landmarks=[], hand_world_landmarks=[]
         )
 
         if self.cv_result != empty_landmark:
-            mid_pos = self.cv_result.hand_world_landmarks[0][MIDDLE_FINGER_MCP]
-            # Used for angle of paddle
-            # index_mcp = self.cv_result.hand_world_landmarks[0][INDEX_FINGER_MCP]
-            # pink_mcp = self.cv_result.hand_world_landmarks[0][PINKY_FINGER_MCP]
+            print("in if")
+            mid_pos = self.cv_result.hand_landmarks[0][MIDDLE_FINGER_MCP]
             prev_pos = self._previous_position
-
+            vel = 0
             if prev_pos is not None:
                 vel = (
                     np.sqrt(
@@ -104,12 +125,18 @@ class PongController:
                     / DEL_TIME
                 )
 
-                self._previous_position = mid_pos
+            self._previous_position = mid_pos
 
-                ## ADD MODEL CONTROL
-
-            print(f"z pos is {mid_pos.z}")
-            print(self.cv_result.handedness[0][0].category_name)
+            # update hand position in model
+            vect_mid_pos = vector(mid_pos.x, mid_pos.y, mid_pos.z)
+            print(f"pos is {vect_mid_pos}")
+            print(f"vel is {vel}")
+            norm = self._model.paddle_normal
+            self._model.update_paddle(
+                paddle_normal=norm,
+                paddle_position=vect_mid_pos,
+                paddle_velocity=vel,
+            )
 
     def hand_cv(self):
         """used to begin mediapipe hand detection"""

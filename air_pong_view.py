@@ -19,18 +19,18 @@ class PongView:
         self.screen = screen
         screen.fill((self.background_colour))
         # paddle
-        # pygame.draw.rect(
-        #     screen,
-        #     (255, 0, 0),
-        #     (
-        #         self.unit_scaling * pong_instance._paddle_edges[0].x
-        #         + self.x_shift,
-        #         self.unit_scaling * pong_instance._paddle_edges[0].y
-        #         + self.z_shift,
-        #         self.unit_scaling * 0.016,
-        #         self.unit_scaling * pong_instance._paddle_width,
-        #     ),
-        # )
+        pygame.draw.rect(
+            screen,
+            (255, 0, 0),
+            (
+                self.unit_scaling * pong_instance._paddle_edges[0][0]
+                + self.x_shift,
+                self.unit_scaling * pong_instance._paddle_edges[0][1]
+                + self.z_shift,
+                self.unit_scaling * 0.016,
+                self.unit_scaling * pong_instance._paddle_width,
+            ),
+        )
         # ball
         pygame.draw.circle(
             screen,
