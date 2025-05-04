@@ -1,5 +1,5 @@
 mediapipe~=0.10.21
-numpy~=2.2.5
+numpy~=1.26.4
 pygame~=2.6.1
 pynput~=1.8.1
 vpython~=7.6.5

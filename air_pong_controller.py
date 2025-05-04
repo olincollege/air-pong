@@ -150,11 +150,13 @@ class PongController:
     def detect_async(self, frame):
         """begin non-blocking detection of landmarks through the class landmarker"""
         # convert np frame to mp image
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
-        # detect landmarks
-        self.landmarker.detect_async(
-            image=mp_image, timestamp_ms=int(time.time() * 1000)
-        )
+        print(f"frame is {frame}")
+        if frame is not None:
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
+            # detect landmarks
+            self.landmarker.detect_async(
+                image=mp_image, timestamp_ms=int(time.time() * 1000)
+            )
 
         # print(f"detected landmarks: {self.cv_result}")
 
@@ -168,6 +170,7 @@ class PongController:
             timestamp_ms: int,
         ):  #
             self.cv_result = result
+            #
 
         options = mp.tasks.vision.HandLandmarkerOptions(
             base_options=mp.tasks.BaseOptions(

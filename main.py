@@ -20,6 +20,7 @@ def main():
     controller1 = PongController(model, 1, "Left")
     controller2 = PongController(model, 2, "Right")
     view = PongView()
+    view.prepare_table(model)
 
     # main loop to run code
     running = True

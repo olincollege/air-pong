@@ -14,6 +14,16 @@ class PongView:
         self.colour = (0, 0, 0)
         self.thickness = 1
         self.screen = pygame.display.set_mode((1200, 700))
+        self.ping_pong_table = pygame.image.load("models/ping_pong_table.png")
+
+    def prepare_table(self, pong_instance):
+        self.ping_pong_table = pygame.transform.scale(
+            self.ping_pong_table,
+            (
+                self.unit_scaling * pong_instance.table_dim.x,
+                self.unit_scaling * pong_instance.table_dim.z,
+            ),
+        )
 
     def display(self, pong_instance, screen):
         self.screen = screen
@@ -50,16 +60,18 @@ class PongView:
             width=0,
         )
         # table
-        ping_pong_table = pygame.image.load("models/ping_pong_table.png")
-        ping_pong_table = pygame.transform.scale(
-            ping_pong_table,
-            (
-                self.unit_scaling * pong_instance.table_dim.x,
-                self.unit_scaling * pong_instance.table_dim.z,
-            ),
-        )
+        # ping_pong_table = pygame.image.load(
+        #     "models/ping_pong_table_low_res.png"
+        # )
+        # ping_pong_table = pygame.transform.scale(
+        #     ping_pong_table,
+        #     (
+        #         self.unit_scaling * pong_instance.table_dim.x,
+        #         self.unit_scaling * pong_instance.table_dim.z,
+        #     ),
+        # )
         screen.blit(
-            ping_pong_table,
+            self.ping_pong_table,
             (
                 self.unit_scaling * pong_instance.table_front + self.x_shift,
                 self.unit_scaling * pong_instance.table_dim.z + self.z_shift,
