@@ -12,9 +12,17 @@ from pynput import keyboard
 
 
 class PongController:
-    """controller class for air-pong game"""
+    """
+    controller class for air-pong game
+
+    Attributes:
+        del_angle: an int for the change in angle of paddle per press
+    """
+
+    del_angle = 5
 
     def __init__(self, model, player: bool, hand: str):
+        ## REMOVE CHOOSING HAND FUNCTIONALITY
         """
 
         Args:
@@ -25,14 +33,16 @@ class PongController:
         self._model = model
         self._player = player
         self._previous_position = None
-        # keyboard listener
+        self._norm = vector(1, 0, 0)
+
+        # pynput keyboard listener
         self._keyboard_listen = keyboard.Listener(
             on_press=self.on_press, on_release=self.on_release
         )
         self._keyboard_listen.start()
         self._latest_key = None
 
-        # create landmarker
+        # mediapipe landmarker
         self.cv_result = mp.tasks.vision.HandLandmarkerResult(
             handedness=[], hand_landmarks=[], hand_world_landmarks=[]
         )
@@ -42,7 +52,7 @@ class PongController:
 
     def on_press(self, key):
         """
-        check if key is pressed with pynput
+        control rotation and serve when key is pressed by the player.
 
         Args:
             key: a pynput key object representing the key pressed
@@ -52,17 +62,24 @@ class PongController:
         if self._player == 1:
             # check player one keyboard inputs
             if key == keyboard.Key.up:
+                print(f"player is {self._player}")
                 print(f"key {key} pressed")
                 # self._model.serve()
                 # Serve ball
-                no = None
             elif key == keyboard.Key.left:
-                print(f"key {key} pressed")
                 # Get normal vector and rotate it left
-                norm = self._model.paddle_normal
-                new_norm = 5
-                # self._model.update_paddle(paddle_normal=new_norm)
+                self._norm = vector.rotate(
+                    self._norm,
+                    (self.del_angle * np.pi) / 180,
+                )
+                print(f"norm vect is: {self._norm}")
+                self._model.update_paddle(
+                    paddle_normal=self._norm,
+                    paddle_position=self._model.paddle_position,
+                    paddle_velocity=self._model.paddle_velocity,
+                )
             elif key == keyboard.Key.right:
+                print(f"player is {self._player}")
                 print(f"key {key} pressed")
                 norm = self._model.paddle_normal
                 new_norm = 5
@@ -70,17 +87,19 @@ class PongController:
         elif self._player == 2:
             # check player two keyboard inputs
             if key == keyboard.KeyCode.from_char("w"):
+                print(f"player is {self._player}")
                 print(f"key {key} pressed")
                 # Serve ball
                 # self._model.serve()
-                no = None
             elif key == keyboard.KeyCode.from_char("a"):
+                print(f"player is {self._player}")
                 print(f"key {key} pressed")
                 # Get normal vector and rotate it left
                 norm = self._model.paddle_normal
                 new_norm = 5
                 # self._model.update_paddle(paddle_normal=new_norm)
             elif key == keyboard.KeyCode.from_char("d"):
+                print(f"player is {self._player}")
                 print(f"key {key} pressed")
                 # Get normal vector and rotate it right
                 norm = self._model.paddle_normal
@@ -103,14 +122,24 @@ class PongController:
             vel: a vpython vector of velocity in m/s
             angle: a vpython normal vector to the center joint of palm
         """
-        self.hand_cv()
+        # pull frame
+        _, frame = self.cap.read()
+        frame = cv2.flip(frame, 1)
+        # non-blocking landmarker execution
+        self.detect_async(frame)
 
+        # draw the landmarks on the page
+        landmarked_frame = draw_landmarks_on_image(frame, self.cv_result)
+        cv2.imshow("frame", landmarked_frame)
+
+        # variables for easy tuning
         MIDDLE_FINGER_MCP = 9
         DEL_TIME = 1 / 30
         empty_landmark = mp.tasks.vision.HandLandmarkerResult(
             handedness=[], hand_landmarks=[], hand_world_landmarks=[]
         )
 
+        # manipulate result
         if self.cv_result != empty_landmark:
             print("in if")
             mid_pos = self.cv_result.hand_landmarks[0][MIDDLE_FINGER_MCP]
@@ -143,8 +172,11 @@ class PongController:
 
         # pull frame
         _, frame = self.cap.read()
+
+        frame = cv2.flip(frame, 1)
         # non-blocking landmarker execution
         self.detect_async(frame)
+
         # print(f"cv result is {self.cv_result}")
 
     def detect_async(self, frame):
@@ -200,3 +232,44 @@ class PongController:
     def latest_key(self):
         """gets the latest key pressed on keyboard"""
         return self._latest_key
+
+
+def draw_landmarks_on_image(
+    rgb_image, detection_result: mp.tasks.vision.HandLandmarkerResult
+):
+    """
+    Courtesy of https://github.com/googlesamples/mediapipe/blob/main/examples/hand_landmarker/python/hand_landmarker.ipynb
+
+    Visualize the landmarks on the page for the game"""
+    try:
+        if detection_result.hand_landmarks == []:
+            return rgb_image
+        else:
+            hand_landmarks_list = detection_result.hand_landmarks
+            annotated_image = np.copy(rgb_image)
+
+            # Loop through the detected hands to visualize.
+            for idx, _ in enumerate(hand_landmarks_list):
+                hand_landmarks = hand_landmarks_list[idx]
+
+                # Draw the hand landmarks.
+                hand_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
+                hand_landmarks_proto.landmark.extend(
+                    [
+                        landmark_pb2.NormalizedLandmark(
+                            x=landmark.x, y=landmark.y, z=landmark.z
+                        )
+                        for landmark in hand_landmarks
+                    ]
+                )
+                mp.solutions.drawing_utils.draw_landmarks(
+                    annotated_image,
+                    hand_landmarks_proto,
+                    mp.solutions.hands.HAND_CONNECTIONS,
+                    mp.solutions.drawing_styles.get_default_hand_landmarks_style(),
+                    mp.solutions.drawing_styles.get_default_hand_connections_style(),
+                )
+            return annotated_image
+    except Exception as e:
+        print(f"running exception: {e}")
+        return rgb_image
