@@ -19,29 +19,18 @@ class PongView:
         self.screen = screen
         screen.fill((self.background_colour))
         # paddle
-        pygame.draw.rect(
-            screen,
-            (255, 0, 0),
-            (
-                self.unit_scaling * pong_instance._paddle_edges[0].x
-                + self.x_shift,
-                self.unit_scaling * pong_instance._paddle_edges[0].y
-                + self.z_shift,
-                self.unit_scaling * 0.016,
-                self.unit_scaling * pong_instance._paddle_width,
-            ),
-        )
-        # print("x0")
-        # print(
-        #     self.unit_scaling * pong_instance._paddle_edges[0].x + self.x_shift
+        # pygame.draw.rect(
+        #     screen,
+        #     (255, 0, 0),
+        #     (
+        #         self.unit_scaling * pong_instance._paddle_edges[0].x
+        #         + self.x_shift,
+        #         self.unit_scaling * pong_instance._paddle_edges[0].y
+        #         + self.z_shift,
+        #         self.unit_scaling * 0.016,
+        #         self.unit_scaling * pong_instance._paddle_width,
+        #     ),
         # )
-        # print("y0")
-        # print(self.unit_scaling * pong_instance._paddle_edges[0].y)
-        # print("x1")
-        # print(self.unit_scaling * pong_instance._paddle_edges[1].x * 0.016)
-        # print("y1")
-        # print(self.unit_scaling * pong_instance._paddle_edges[1].y - 191)
-        # [vector(1, 0.55, 0), vector(1, 0.7, 0)]
         # ball
         pygame.draw.circle(
             screen,
@@ -61,14 +50,19 @@ class PongView:
             width=0,
         )
         # table
-        pygame.draw.rect(
-            screen,
-            (0, 0, 255),
+        ping_pong_table = pygame.image.load("models/ping_pong_table.png")
+        ping_pong_table = pygame.transform.scale(
+            ping_pong_table,
+            (
+                self.unit_scaling * pong_instance.table_dim.x,
+                self.unit_scaling * pong_instance.table_dim.z,
+            ),
+        )
+        screen.blit(
+            ping_pong_table,
             (
                 self.unit_scaling * pong_instance.table_front + self.x_shift,
                 self.unit_scaling * pong_instance.table_dim.z + self.z_shift,
-                self.unit_scaling * pong_instance.table_dim.x,
-                self.unit_scaling * pong_instance.table_dim.z * 0.02,
             ),
         )
         # table net
