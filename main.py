@@ -36,6 +36,7 @@ def main():
         controller1.update_hand()
         model.trajectory()
         view.display(model, screen)
+        print(f"edgepoints are: {model._paddle_edges}")
         pygame.display.flip()
 
 
