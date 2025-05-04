@@ -78,11 +78,19 @@ class PongModel:
         self._mag_force = vector(0, 0, 0)
         self._drag_force = vector(0, 0, 0)
         self._paddle_edges = [
-            (vector(1, 0.4, 0)),
+            [],
+            [],
+        ]
+        self._paddle_edges_pair = [
+            [[], []],
+            [[], []],
         ]
         self._paddle_normal = vector(1, 0, 0)
+        self._paddle_normal_pair = [vector(1, 0, 0), vector(-1, 0, 0)]
         self._paddle_velocity = vector(0, 0, 0)
+        self._paddle_velocity_pair = [vector(0, 0, 0), vector(0, 0, 0)]
         self._paddle_position = vector(0, 0, 0)
+        self._paddle_position_pair = [vector(0, 0, 0), vector(0, 0, 0)]
         self._player_score = (0, 0)
         self._win_threshold = win_threshold
         self._serve_increment = serve_increment
@@ -209,6 +217,7 @@ class PongModel:
         """
         Base method for determining where the ball will go next after a time_step.
         """
+        self.switch_paddle()
         self.hit_table()
         self.paddle_bounce()
         self.hit_net()
@@ -219,13 +228,10 @@ class PongModel:
             PongModel._acc_gravity
             + (self._mag_force + self._drag_force) / PongModel._ball_mass
         ) * PongModel._time_step
-        print(self._ball_spin)
+        # print(self._ball_spin)
 
     def update_paddle(
-        self,
-        paddle_normal,
-        paddle_position,
-        paddle_velocity,
+        self, paddle_normal, paddle_position, paddle_velocity, player_paddle
     ):
         """
         Updates instance attributes encoding the paddle's state.
@@ -236,11 +242,13 @@ class PongModel:
             of the paddle.
             paddle_velocity - A vector representing the velocity of the paddle when swung
             at the ball.
+            player_paddle - An integer, 0 or 1, corresponding to the index of the list of
+            paddles.
         """
-        self._paddle_normal = paddle_normal
-        self._paddle_velocity = paddle_velocity
-        self._paddle_position = paddle_position
-        self._paddle_edges = [
+        self._paddle_normal_pair[player_paddle] = paddle_normal
+        self._paddle_velocity_pair[player_paddle] = paddle_velocity
+        self._paddle_position_pair[player_paddle] = paddle_position
+        self._paddle_edges_pair[player_paddle] = [
             paddle_position
             + vector.rotate(
                 PongModel._paddle_width / 2 * paddle_normal,
@@ -254,16 +262,16 @@ class PongModel:
                 axis=vector(0, 0, 1),
             ),
         ]
-        self._paddle_edges = [
+        self._paddle_edges_pair[player_paddle] = [
             [
-                self._paddle_edges[0].x,
-                self._paddle_edges[0].y,
-                self._paddle_edges[0].z,
+                self._paddle_edges_pair[player_paddle][0].x,
+                self._paddle_edges_pair[player_paddle][0].y,
+                self._paddle_edges_pair[player_paddle][0].z,
             ],
             [
-                self._paddle_edges[1].x,
-                self._paddle_edges[1].y,
-                self._paddle_edges[1].z,
+                self._paddle_edges_pair[player_paddle][1].x,
+                self._paddle_edges_pair[player_paddle][1].y,
+                self._paddle_edges_pair[player_paddle][1].z,
             ],
         ]
 
@@ -276,7 +284,8 @@ class PongModel:
             A boolean, True if the ball hits the paddle and False otherwise.
         """
         _horizontal_factor = vector.rotate(
-            vector.norm(
+            self.player_coefficient()
+            * vector.norm(
                 vector(
                     self._paddle_normal.x,
                     0,
@@ -312,7 +321,7 @@ class PongModel:
         )
         _paddle_edges_check = np.transpose(
             np.linalg.inv(_change_basis)
-            @ np.transpose(np.array(self.paddle_edges))
+            @ np.transpose(np.array(self._paddle_edges))
         )
         _ball_position_check = np.transpose(
             np.linalg.inv(_change_basis)
@@ -389,13 +398,19 @@ class PongModel:
                     - _spring_acc
                     * (PongModel._paddle_stiff / PongModel._ball_mass)
                 )
-                self._ball_velocity = -self._paddle_normal * (
-                    -PongModel._paddle_force / PongModel._ball_mass * _cumm_time
-                    + _initial_velocity
-                    * np.cos(
-                        _cumm_time
-                        * np.sqrt(
-                            PongModel._paddle_stiff / PongModel._ball_mass
+                self._ball_velocity = (
+                    -self.player_coefficient()
+                    * self._paddle_normal
+                    * (
+                        -PongModel._paddle_force
+                        / PongModel._ball_mass
+                        * _cumm_time
+                        + _initial_velocity
+                        * np.cos(
+                            _cumm_time
+                            * np.sqrt(
+                                PongModel._paddle_stiff / PongModel._ball_mass
+                            )
                         )
                     )
                 )
@@ -486,6 +501,22 @@ class PongModel:
         )
         self._ball_velocity = vector(0, 2, 0)
 
+    def switch_paddle(self):
+        """
+        Switch which paddle is active.
+        Method updates single paddle state attributes based on which side
+        of the table the ball is on.
+        """
+        _paddle_index = (1 - self.player_coefficient()) // 2
+        self._paddle_normal = self._paddle_normal_pair[_paddle_index]
+        self._paddle_velocity = self._paddle_velocity_pair[_paddle_index]
+        self._paddle_position = self._paddle_position_pair[_paddle_index]
+        self._paddle_edges = self._paddle_edges_pair[_paddle_index]
+        # print(_paddle_index)
+        print(_paddle_index)
+        print(self._paddle_edges)
+        print(self._paddle_edges_pair[1])
+
     @property
     def ball_position(self):
         return self._ball_position
@@ -512,7 +543,7 @@ class PongModel:
 
     @property
     def paddle_edges(self):
-        return self._paddle_edges
+        return self._paddle_edges_pair
 
     @property
     def player_score(self):
@@ -520,12 +551,12 @@ class PongModel:
 
     @property
     def paddle_normal(self):
-        return self._paddle_normal
+        return self._paddle_normal_pair
 
     @property
     def paddle_position(self):
-        return self._paddle_position
+        return self._paddle_position_pair
 
     @property
     def paddle_velocity(self):
-        return self._paddle_velocity
+        return self._paddle_velocity_pair
