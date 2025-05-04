@@ -475,3 +475,7 @@ class PongModel:
     @property
     def paddle_position(self):
         return self._paddle_position
+
+    @property
+    def paddle_velocity(self):
+        return self._paddle_velocity
