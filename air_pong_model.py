@@ -47,7 +47,7 @@ class PongModel:
 
     # All variables use base SI units.
     _table_length, _table_width, _table_height = 2.74, 1.525, 0.76
-    _paddle_width, paddle_length = 0.15, 0.17
+    _paddle_width, paddle_length = 0.16, 0.18
     _net_height = 0.1525
     _table_front = 1
     _ball_mass = 0.0027
@@ -198,13 +198,13 @@ class PongModel:
                 self._ball_velocity = vector(
                     -0.1 * self.player_coefficient(), 0, 0
                 )
-                print("net bounce")
+                # print("net bounce")
             elif (
                 self.ball_position.y - self._ball_radius
                 <= PongModel._net_height + PongModel._table_height
                 and PongModel._current_bounce != PongModel._bounce_count
             ):
-                print("let")
+                # print("let")
                 PongModel._current_bounce = PongModel._bounce_count
                 self._ball_velocity = vector.rotate(
                     2
@@ -528,9 +528,9 @@ class PongModel:
         self._paddle_position = self._paddle_position_pair[_paddle_index]
         self._paddle_edges = self._paddle_edges_pair[_paddle_index]
         # print(_paddle_index)
-        print(_paddle_index)
-        print(self._paddle_edges)
-        print(self._paddle_edges_pair[1])
+        # print(_paddle_index)
+        # print(self._paddle_edges)
+        # print(self._paddle_edges_pair[1])
 
     @property
     def ball_position(self):

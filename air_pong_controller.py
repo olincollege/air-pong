@@ -21,7 +21,7 @@ class PongController:
 
     del_angle = 5
 
-    def __init__(self, model, player: bool, hand: str):
+    def __init__(self, model, player: int, hand: str):
         ## REMOVE CHOOSING HAND FUNCTIONALITY
         """
 
@@ -85,11 +85,11 @@ class PongController:
                     self._norm,
                     (self.del_angle * np.pi) / 180,
                 )
-                print(f"norm vect is: {self._norm}")
                 self._model.update_paddle(
                     paddle_normal=self._norm,
                     paddle_position=self._model.paddle_position,
                     paddle_velocity=self._model.paddle_velocity,
+                    player_paddle=int(self._player),
                 )
             elif key == keyboard.Key.right:
                 # Get normal vector and rotate it clockwise
@@ -97,11 +97,11 @@ class PongController:
                     self._norm,
                     (-self.del_angle * np.pi) / 180,
                 )
-                print(f"norm vect is: {self._norm}")
                 self._model.update_paddle(
                     paddle_normal=self._norm,
                     paddle_position=self._model.paddle_position,
                     paddle_velocity=self._model.paddle_velocity,
+                    player_paddle=self._player - 1,
                 )
         elif self._player == 2:
             # check player two keyboard inputs
@@ -114,11 +114,11 @@ class PongController:
                     self._norm,
                     (self.del_angle * np.pi) / 180,
                 )
-                print(f"norm vect is: {self._norm}")
                 self._model.update_paddle(
                     paddle_normal=self._norm,
                     paddle_position=self._model.paddle_position,
                     paddle_velocity=self._model.paddle_velocity,
+                    player_paddle=self._player - 1,
                 )
             elif key == keyboard.KeyCode.from_char("d"):
                 # Get normal vector and rotate it clockwise
@@ -126,11 +126,11 @@ class PongController:
                     self._norm,
                     (-self.del_angle * np.pi) / 180,
                 )
-                print(f"norm vect is: {self._norm}")
                 self._model.update_paddle(
                     paddle_normal=self._norm,
                     paddle_position=self._model.paddle_position,
                     paddle_velocity=self._model.paddle_velocity,
+                    player_paddle=self._player - 1,
                 )
 
     def on_release(self, key):
@@ -168,7 +168,6 @@ class PongController:
 
         # manipulate result
         if self.cv_result != empty_landmark:
-            print("in if")
             mid_pos = self.cv_result.hand_landmarks[0][MIDDLE_FINGER_MCP]
             prev_pos = self._previous_position
             vel = 0
@@ -187,11 +186,12 @@ class PongController:
             vect_mid_pos = vector(mid_pos.x, -mid_pos.y, mid_pos.z)
             print(f"pos is {vect_mid_pos}")
             print(f"vel is {vel}")
-            norm = self._model.paddle_normal
+            norm = self._model.paddle_normal[self._player - 1]
             self._model.update_paddle(
                 paddle_normal=norm,
                 paddle_position=vect_mid_pos,
                 paddle_velocity=vel,
+                player_paddle=self._player - 1,
             )
 
     def hand_cv(self):
@@ -204,20 +204,15 @@ class PongController:
         # non-blocking landmarker execution
         self.detect_async(frame)
 
-        # print(f"cv result is {self.cv_result}")
-
     def detect_async(self, frame):
         """begin non-blocking detection of landmarks through the class landmarker"""
         # convert np frame to mp image
-        print(f"frame is {frame}")
         if frame is not None:
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
             # detect landmarks
             self.landmarker.detect_async(
                 image=mp_image, timestamp_ms=int(time.time() * 1000)
             )
-
-        # print(f"detected landmarks: {self.cv_result}")
 
     def create_landmarker(self):
         """creates the landmarker object from the hand landmarker.task"""

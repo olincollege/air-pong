@@ -14,9 +14,6 @@ def main():
 
     # intialize MVCC (2 controllers)
     model = PongModel(2, 11)
-    model.update_paddle(
-        vector(1, 0.4, 0).hat, vector(1, 0.86, 0), vector(0.3, 0.4699, 0)
-    )
     controller1 = PongController(model, 1, "Left")
     controller2 = PongController(model, 2, "Right")
     view = PongView()
@@ -30,13 +27,11 @@ def main():
                 controller1.release()
                 controller2.release()
                 running = False
-        model.update_paddle(
-            vector(1, 0.4, 0).hat, vector(1, 0.86, 0), vector(0.3, 0.4699, 0)
-        )
+
         controller1.update_hand()
+        controller2.update_hand()
         model.trajectory()
         view.display(model, screen)
-        print(f"edgepoints are: {model._paddle_edges}")
         pygame.display.flip()
 
 
