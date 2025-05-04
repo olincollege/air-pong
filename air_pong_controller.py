@@ -48,9 +48,23 @@ class PongController:
         )
         self.landmarker = mp.tasks.vision.HandLandmarker
         self.create_landmarker()
-        self.cap = cv2.VideoCapture(0)
+        self.cap = self.create_cap(attempt=0)
 
-    def on_press(self, key):
+    def create_cap(self, attempt):
+        """
+        creates the videocapture element.
+        """
+        cap = cv2.VideoCapture(0)
+        if cap.isOpened():
+            return cap
+        elif attempt == 10:
+            print("video capture FAILED, closing")
+            self.close()
+        else:
+            print("video capture open failed, trying again")
+            self.create_cap(attempt=attempt + 1)
+
+    def on_press(self, key):  # REFACTOR AT SOME POINT
         """
         control rotation and serve when key is pressed by the player.
 
@@ -62,12 +76,10 @@ class PongController:
         if self._player == 1:
             # check player one keyboard inputs
             if key == keyboard.Key.up:
-                print(f"player is {self._player}")
-                print(f"key {key} pressed")
-                # self._model.serve()
                 # Serve ball
+                self._model.serve()
             elif key == keyboard.Key.left:
-                # Get normal vector and rotate it left
+                # Get normal vector and rotate it counterclockwise
                 self._norm = vector.rotate(
                     self._norm,
                     (self.del_angle * np.pi) / 180,
@@ -79,32 +91,46 @@ class PongController:
                     paddle_velocity=self._model.paddle_velocity,
                 )
             elif key == keyboard.Key.right:
-                print(f"player is {self._player}")
-                print(f"key {key} pressed")
-                norm = self._model.paddle_normal
-                new_norm = 5
-                # self._model.update_paddle(paddle_normal=new_norm)
+                # Get normal vector and rotate it clockwise
+                self._norm = vector.rotate(
+                    self._norm,
+                    (-self.del_angle * np.pi) / 180,
+                )
+                print(f"norm vect is: {self._norm}")
+                self._model.update_paddle(
+                    paddle_normal=self._norm,
+                    paddle_position=self._model.paddle_position,
+                    paddle_velocity=self._model.paddle_velocity,
+                )
         elif self._player == 2:
             # check player two keyboard inputs
             if key == keyboard.KeyCode.from_char("w"):
-                print(f"player is {self._player}")
-                print(f"key {key} pressed")
-                # Serve ball
-                # self._model.serve()
+                # serve ball
+                self._model.serve()
             elif key == keyboard.KeyCode.from_char("a"):
-                print(f"player is {self._player}")
-                print(f"key {key} pressed")
-                # Get normal vector and rotate it left
-                norm = self._model.paddle_normal
-                new_norm = 5
-                # self._model.update_paddle(paddle_normal=new_norm)
+                # Get normal vector and rotate it counterclockwise
+                self._norm = vector.rotate(
+                    self._norm,
+                    (self.del_angle * np.pi) / 180,
+                )
+                print(f"norm vect is: {self._norm}")
+                self._model.update_paddle(
+                    paddle_normal=self._norm,
+                    paddle_position=self._model.paddle_position,
+                    paddle_velocity=self._model.paddle_velocity,
+                )
             elif key == keyboard.KeyCode.from_char("d"):
-                print(f"player is {self._player}")
-                print(f"key {key} pressed")
-                # Get normal vector and rotate it right
-                norm = self._model.paddle_normal
-                new_norm = 5
-                # self._model.update_paddle(paddle_normal=new_norm)
+                # Get normal vector and rotate it clockwise
+                self._norm = vector.rotate(
+                    self._norm,
+                    (-self.del_angle * np.pi) / 180,
+                )
+                print(f"norm vect is: {self._norm}")
+                self._model.update_paddle(
+                    paddle_normal=self._norm,
+                    paddle_position=self._model.paddle_position,
+                    paddle_velocity=self._model.paddle_velocity,
+                )
 
     def on_release(self, key):
         """check if key is released"""
@@ -157,7 +183,7 @@ class PongController:
             self._previous_position = mid_pos
 
             # update hand position in model
-            vect_mid_pos = vector(mid_pos.x, mid_pos.y, mid_pos.z)
+            vect_mid_pos = vector(mid_pos.x, -mid_pos.y, mid_pos.z)
             print(f"pos is {vect_mid_pos}")
             print(f"vel is {vel}")
             norm = self._model.paddle_normal
