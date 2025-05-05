@@ -7,6 +7,7 @@ class PongView:
     """view class for air-pong game"""
 
     def __init__(self):
+        pygame.font.init()
         self.background_colour = (255, 255, 255)
         self.unit_scaling = 0
         self.x_shift = 0.5 * (5 - 2.74)
@@ -14,8 +15,10 @@ class PongView:
         self.colour = (0, 0, 0)
         self.screen = pygame.display.set_mode((1500, 600))  # 5x2
         self.ping_pong_table = pygame.image.load("models/ping_pong_table.png")
+        self.scoreboard = pygame.image.load("models/scoreboard.png")
+        self.font = pygame.font.Font("models/monofonto_rg.otf", 0)
 
-    def prepare_table(self, pong_instance, screen):
+    def prepare_images(self, pong_instance, screen):
         self.screen = screen
         self.unit_scaling = screen.get_width() / 5
         self.ping_pong_table = pygame.transform.scale(
@@ -24,6 +27,16 @@ class PongView:
                 self.unit_scaling * pong_instance.table_dim.x,
                 self.unit_scaling * pong_instance.table_dim.z,
             ),
+        )
+        self.scoreboard = pygame.transform.scale(
+            self.scoreboard,
+            (
+                self.unit_scaling * pong_instance.table_dim.x,
+                self.unit_scaling * 0.1875,
+            ),
+        )
+        self.font = pygame.font.Font(
+            "models/monofonto_rg.otf", int(self.unit_scaling * 0.18)
         )
 
     def display(self, pong_instance, screen):
@@ -82,6 +95,7 @@ class PongView:
                 ),
             ),
         )
+        # table
         screen.blit(
             self.ping_pong_table,
             (
@@ -101,3 +115,36 @@ class PongView:
                 self.unit_scaling * 0.1525,  # Height of the net
             ),
         )
+        # scoreboard
+        screen.blit(
+            self.scoreboard,
+            (
+                self.unit_scaling * self.x_shift,
+                0,
+            ),
+        )
+        pygame.font.init()
+        left_score = self.font.render(
+            f"{pong_instance.player_score[0]}", True, (255, 255, 255)
+        )
+        left_score_rect = left_score.get_rect()
+        left_score_rect.topleft = (
+            self.unit_scaling * (self.x_shift + 0.085),
+            -(
+                self.unit_scaling * 0.017
+            ),  # 0.017 is the space above the number in the font
+        )  # .085 is the scoreboard arc radius
+        screen.blit(left_score, left_score_rect)
+        right_score = self.font.render(
+            f"{pong_instance.player_score[1]}", True, (255, 255, 255)
+        )
+        right_score_rect = left_score.get_rect()
+        right_score_rect.topright = (
+            self.unit_scaling
+            * (self.x_shift + pong_instance.table_dim.x - 0.085),
+            -(
+                self.unit_scaling * 0.017
+            ),  # 0.017 is the space above the number in the font
+        )  # .085 is the scoreboard arc radius
+        screen.blit(left_score, left_score_rect)
+        screen.blit(right_score, right_score_rect)
