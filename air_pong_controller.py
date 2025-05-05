@@ -183,7 +183,7 @@ class PongController:
             self._previous_position = mid_pos
 
             # update hand position in model
-            vect_mid_pos = vector(mid_pos.x, -mid_pos.y, mid_pos.z)
+            vect_mid_pos = vector(mid_pos.x, mid_pos.y, mid_pos.z)
             print(f"pos is {vect_mid_pos}")
             print(f"vel is {vel}")
             norm = self._model.paddle_normal[self._player - 1]
