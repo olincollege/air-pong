@@ -58,7 +58,7 @@ class PongModel:
     """
 
     # All variables use base SI units.
-    _table_length, _table_width, _table_height = 2.74, 1.525, 0.76
+    _table_length, _table_width, _table_height = 2.74, 1.525, 0.653796
     _paddle_width, paddle_length = 0.15, 0.17
     _net_height = 0.1525
     _table_front = (5 - _table_length) / 2
@@ -540,9 +540,9 @@ class PongModel:
         self._paddle_position = self._paddle_position_pair[_paddle_index]
         self._paddle_edges = self._paddle_edges_pair[_paddle_index]
         # print(_paddle_index)
-        print(_paddle_index)
-        print(self._paddle_edges)
-        print(self._paddle_edges_pair[1])
+        # print(_paddle_index)
+        # print(self._paddle_edges)
+        # print(self._paddle_edges_pair[1])
 
     @property
     def ball_position(self):
