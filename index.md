@@ -7,3 +7,9 @@
 #
 layout: home
 ---
+
+### About
+
+The goal of this project
+
+##
