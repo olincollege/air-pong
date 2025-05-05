@@ -607,6 +607,10 @@ class PongModel:
         return PongModel._table_front
 
     @property
+    def net_height(self):
+        return PongModel._net_height
+
+    @property
     def ball_spin(self):
         return self._ball_spin
 
