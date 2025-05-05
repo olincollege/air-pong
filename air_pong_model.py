@@ -11,6 +11,24 @@ class PongModel:
         ball_velocity - A vector representing the velocity of the ball.
         ball_spin = A vector representing the ball's spin axis,
                 with magnitude equal to the ball's spin rate.
+        angle - A float corresponding to the angle between the ball and table.
+            (radians)
+        paddle_normal_pair - A list of two lists, each encoding the unit normal
+            vector of player 1 and player 2's paddles respectively.
+        paddle_velocity_pair - A list of two lists, each encoding the velocity
+            vector of player 1 and player 2's paddles respectively (m/s).
+        paddle_position_pair - A list of two lists, each encoding the position
+            of player 1 and player 2's paddles respectively (m).
+        paddle_edges_pair - A list of two 2D arrays, each encoding the position
+            of player 1 and player 2's paddle edges respectively (m). The top
+            row of the array is the top point of the paddle and the bottom row
+            is the bottom point.
+        player1_serving - A boolean indicating whether it is player 1's serve.
+            False indicates that it is player 2's serve.
+        bounce_count - An integer keeping track of the number of bounces on
+            each side.
+        current_bounce - An integer equal to the bounce_count when the ball
+            last hit the net.
         table_length - Float equal to the length of ping pong table (meters).
         table_width - Float equal to the width of ping pong table (meters).
         table_height - Float equal to the height of ping pong table (meters).
@@ -36,20 +54,14 @@ class PongModel:
         lift_coefficient - Float representing the coefficient of lift of a
             ping pong ball.
         paddle_force - A float equal to the force applied by a player wielding
-        their paddle (N).
-        bounce_count - An integer keeping track of the number of bounces on
-        each side.
-        player1_serving - A boolean indicating whether it is player 1's serve.
-        False indicates that it is player 2's serve.
-        current_bounce - An integer equal to the bounce_count when the ball
-        last hit the net.
+            their paddle (N).
     """
 
     # All variables use base SI units.
     _table_length, _table_width, _table_height = 2.74, 1.525, 0.76
-    _paddle_width, paddle_length = 0.16, 0.18
+    _paddle_width, paddle_length = 0.15, 0.17
     _net_height = 0.1525
-    _table_front = 1
+    _table_front = (5 - _table_length) / 2
     _ball_mass = 0.0027
     _ball_radius = 0.02
     _time_step = 0.001
@@ -63,9 +75,6 @@ class PongModel:
     _drag_coefficient = 0.47
     _lift_coefficient = 2.5
     _paddle_force = 0.5
-    _bounce_count = 0
-    player1_serving = True
-    _current_bounce = 0
 
     def __init__(self, win_threshold, serve_increment):
         """
@@ -110,6 +119,9 @@ class PongModel:
             self._paddle_normal, self._paddle_position, self._paddle_velocity, 0
         )
         self._paddle_edges = self._paddle_edges_pair[0]
+        self._bounce_count = 0
+        self._current_bounce = 0
+        self.player1_serving = True
 
     def compute_magnus_force(self):
         """
@@ -177,9 +189,9 @@ class PongModel:
                 / self._ball_radius**2
             )
             if self.player_coefficient() == 1:
-                PongModel._bounce_count += 1
+                self._bounce_count += 1
             else:
-                PongModel._bounce_count -= 1
+                self._bounce_count -= 1
         self._angle = vector.diff_angle(self._ball_velocity, vector(1, 0, 0))
 
     def hit_net(self):
@@ -198,14 +210,14 @@ class PongModel:
                 self._ball_velocity = vector(
                     -0.1 * self.player_coefficient(), 0, 0
                 )
-                # print("net bounce")
+                print("net bounce")
             elif (
                 self.ball_position.y - self._ball_radius
                 <= PongModel._net_height + PongModel._table_height
-                and PongModel._current_bounce != PongModel._bounce_count
+                and self._current_bounce != self._bounce_count
             ):
-                # print("let")
-                PongModel._current_bounce = PongModel._bounce_count
+                print("let")
+                self._current_bounce = self._bounce_count
                 self._ball_velocity = vector.rotate(
                     2
                     * np.arcsin(
@@ -454,21 +466,21 @@ class PongModel:
         """
         Method for updating the 'player_score' and 'player1_serving' attributes.
         """
-        if PongModel._bounce_count == 2:
+        if self._bounce_count == 2:
             self._player_score = (
                 self._player_score[0] + 1,
                 self._player_score[1],
             )
             if self._player_score % self._serve_increment == 0:
-                PongModel.player1_serving = not (PongModel.player1_serving)
+                self._player1_serving = not (self._player1_serving)
 
-        if PongModel._bounce_count == -1:
+        if self._bounce_count == -1:
             self._player_score = (
                 self._player_score[0],
                 self._player_score[1] + 1,
             )
             if self._player_score % self._serve_increment == 0:
-                PongModel.player1_serving = not (PongModel.player1_serving)
+                self._player1_serving = not (self._player1_serving)
 
     def check_win(self):
         """
@@ -507,7 +519,7 @@ class PongModel:
         and velocity.
         """
         _serving_position = PongModel._table_front - 0.05
-        if self.player1_serving is False:
+        if self._player1_serving is False:
             _serving_position = (
                 PongModel._table_front + PongModel._table_length + 0.05
             )
@@ -528,9 +540,9 @@ class PongModel:
         self._paddle_position = self._paddle_position_pair[_paddle_index]
         self._paddle_edges = self._paddle_edges_pair[_paddle_index]
         # print(_paddle_index)
-        # print(_paddle_index)
-        # print(self._paddle_edges)
-        # print(self._paddle_edges_pair[1])
+        print(_paddle_index)
+        print(self._paddle_edges)
+        print(self._paddle_edges_pair[1])
 
     @property
     def ball_position(self):
