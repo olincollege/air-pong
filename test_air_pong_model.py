@@ -6,7 +6,7 @@ import numpy as np
 from vpython import vector
 import air_pong_model
 
-particle = air_pong_model.PongModel(2, 11)
+particle = air_pong_model.PongModel(11, 2)
 
 
 def test_update_paddle():
@@ -100,6 +100,74 @@ def test_check_point():
         vector(0, 0, 0),
         0,
     )
+    while particle.ball_position.y != 0:
+        particle.trajectory()
+        particle.check_point()
+    assert particle.player_score == (1, 2)
+
+
+def test_check_win():
+    """
+    Test wether a win is declared when expected.
+    """
+    # Check that a win is declared for the score (0, 11), due to
+    # a double bounce on the server side.
+    particle.serve()
+    particle._player_score = (0, 10)
+    particle.update_paddle(
+        vector(0.1, 1, 0).hat,
+        vector(particle.table_front, particle.table_dim.z, 0),
+        vector(0, 0, 0),
+        0,
+    )
+    while particle.ball_position.y != 0:
+        particle.trajectory()
+        particle.check_point()
+    assert particle.check_win() == 2
+
+    # Check that a win is not declared for the score (10, 11).
+    particle.serve()
+    particle._player_score = (10, 10)
+    particle.update_paddle(
+        vector(0.1, 1, 0).hat,
+        vector(particle.table_front, particle.table_dim.z, 0),
+        vector(0, 0, 0),
+        0,
+    )
+    while particle.ball_position.y != 0:
+        particle.trajectory()
+        particle.check_point()
+    assert particle.check_win() is False
+
+
+def test_serve():
+    """
+    Check that the serve method switches sides of the table according
+    the given increment.
+    """
+    # Current serving paddle
+    particle._player1_serving = True
+    particle.update_paddle(
+        vector(1, 0, 0).hat,
+        vector(0, 0, 0),
+        vector(0, 0, 0),
+        0,
+    )
+    # Not currently serving paddle
+    particle.update_paddle(
+        vector(1, 0, 0).hat,
+        vector(0, 0, 0),
+        vector(0, 0, 0),
+        1,
+    )
+    particle.serve()
+    particle._player_score = (0, 1)
+    # Win point --> serve switches players for increment 2.
+    while particle.ball_position.y != 0:
+        particle.trajectory()
+        particle.check_point()
+    # Next serve should result in a miss.
+    particle.serve()
     while particle.ball_position.y != 0:
         particle.trajectory()
         particle.check_point()
