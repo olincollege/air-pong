@@ -8,9 +8,8 @@
 layout: home
 ---
 
-<img src="assets/logo.png" alt="drawing" width="200" style="display: block; margin-left: auto; margin-right: auto;" />
 
-<video controls src="assets/air_pong_video.mp4" title="Title" style="display: block; margin-left: auto; margin-right: auto;"></video>
+<img src="assets/logo.png" alt="drawing" width="200" style="display: block; margin-left: auto; margin-right: auto;" />
 
 ## About
 
@@ -19,9 +18,11 @@ physically mime Pong Pong paddle motions to interact with the game. We wanted
 to challenge ourselves in doing accurate ping pong physical simulation and monocular
 computer vision.
 
+<video controls src="assets/air_pong_video.mp4" title="Title" width="800" style="display: block; margin-left: auto; margin-right: auto;"></video>
+
 ## Structure
 
-<img src="assets/code framework.jpg" alt="drawing" width="600" style="display: block; margin-left: auto; margin-right: auto;" />
+<img src="assets/code framework.jpg" alt="drawing" width="800" style="display: block; margin-left: auto; margin-right: auto;" />
 
 
 This project uses an Model View Controller (MVC) framework for standard code organization. Each class is tied together through a main script that imports and runs the game in loop. The main features of each class are as follows
