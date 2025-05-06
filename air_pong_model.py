@@ -265,6 +265,7 @@ class PongModel:
         Base method for determining where the ball will go next after a time_step.
         Method updates ball_position and ball_velocity attributes.
         """
+        self._bounce_count = -(self.player_coefficient() + 1) // 2
         # Check whether ball is in free motion.
         if self._ball_home is False:
             # Switch which paddle the ball will hit next.
@@ -509,7 +510,7 @@ class PongModel:
         # print(self._bounce_count)
         # Check if player 2 has won a point and update score if so.
         if self._bounce_count == 2 or (
-            self.ball_position.y < 0
+            self.ball_position.y < -2
             and self.ball_position.x < self._table_front
         ):
             self._player_score = (
@@ -528,7 +529,7 @@ class PongModel:
                 self._player1_serving = not (self._player1_serving)
         # Check if player 1 has won a point and update score if so.
         if self._bounce_count == -1 or (
-            self.ball_position.y < 0
+            self.ball_position.y < -2
             and self.ball_position.x > self.table_dim.x + self._table_front
         ):
             self._player_score = (
