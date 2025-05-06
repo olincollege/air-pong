@@ -591,7 +591,7 @@ class PongModel:
         # Change serving position if player 2 is serving.
         if self._player1_serving is False:
             _serving_position = (
-                PongModel._table_front + PongModel._table_length + 0.05
+                PongModel._table_front + PongModel._table_length + 0.1
             )
         # Set ball position and vertical velocity to initial a serve.
         self._ball_position = vector(
