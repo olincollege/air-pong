@@ -77,58 +77,32 @@ class PongView:
         )
 
         # paddle
-        pygame.draw.polygon(
+        pygame.draw.line(
             screen,
             (255, 0, 0),
             (
-                (
-                    self.unit_scaling * pong_instance.paddle_edges[0][0][0],
-                    self.unit_scaling
-                    * (self.y_shift - pong_instance.paddle_edges[0][0][1]),
-                ),
-                (
-                    self.unit_scaling * pong_instance.paddle_edges[0][1][0],
-                    self.unit_scaling
-                    * (self.y_shift - pong_instance.paddle_edges[0][0][1]),
-                ),
-                (
-                    self.unit_scaling * pong_instance.paddle_edges[0][0][0],
-                    self.unit_scaling
-                    * (self.y_shift - pong_instance.paddle_edges[0][0][1]),
-                ),
-                (
-                    self.unit_scaling * pong_instance.paddle_edges[0][1][0],
-                    self.unit_scaling
-                    * (self.y_shift - pong_instance.paddle_edges[0][1][1]),
-                ),
+                self.unit_scaling * pong_instance.paddle_edges[0][1][0],
+                self.unit_scaling * pong_instance.paddle_edges[0][1][1],
             ),
+            (
+                self.unit_scaling * pong_instance.paddle_edges[0][0][0],
+                self.unit_scaling * pong_instance.paddle_edges[0][0][1],
+            ),
+            width=int(self.unit_scaling * pong_instance.paddle_dim.z),
         )
         # paddle 2
-        pygame.draw.polygon(
+        pygame.draw.line(
             screen,
             (0, 0, 255),
             (
-                (
-                    self.unit_scaling * pong_instance.paddle_edges[1][0][0],
-                    self.unit_scaling
-                    * (self.y_shift - pong_instance.paddle_edges[1][0][1]),
-                ),
-                (
-                    self.unit_scaling * pong_instance.paddle_edges[1][1][0],
-                    self.unit_scaling
-                    * (self.y_shift - pong_instance.paddle_edges[1][0][1]),
-                ),
-                (
-                    self.unit_scaling * pong_instance.paddle_edges[1][0][0],
-                    self.unit_scaling
-                    * (self.y_shift - pong_instance.paddle_edges[1][0][1]),
-                ),
-                (
-                    self.unit_scaling * pong_instance.paddle_edges[1][1][0],
-                    self.unit_scaling
-                    * (self.y_shift - pong_instance.paddle_edges[1][1][1]),
-                ),
+                self.unit_scaling * pong_instance.paddle_edges[1][1][0],
+                self.unit_scaling * pong_instance.paddle_edges[1][1][1],
             ),
+            (
+                self.unit_scaling * pong_instance.paddle_edges[1][0][0],
+                self.unit_scaling * pong_instance.paddle_edges[1][0][1],
+            ),
+            width=int(self.unit_scaling * pong_instance.paddle_dim.z),
         )
         # table
         screen.blit(
