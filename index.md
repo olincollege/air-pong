@@ -8,13 +8,12 @@
 layout: home
 ---
 
-![Game Demo](https://www.stigaus.com/cdn/shop/files/stiga-one-star-multicolor-table-tennis-balls_tabletennisballs__t1400-1_6_1000x.png?v=1716929421)
-
+![Game Demo](assets/Images/screenshot.PNG)
 ## About
 
 We set out to create a ping pong simulator game that allows a player to
-physcially mime Pong Pong motion to interact with the game. We wanted
-to challenge ourselves in doing accurate ping pong physica and monocular
+physically mime Pong Pong motion to interact with the game. We wanted
+to challenge ourselves in doing accurate ping pong physical and monocular
 computer vision.
 
 ## structure
