@@ -8,7 +8,7 @@
 layout: home
 ---
 
-![Game Demo](assets/images/screenshot.png)
+![Game Demo](https://www.stigaus.com/cdn/shop/files/stiga-one-star-multicolor-table-tennis-balls_tabletennisballs__t1400-1_6_1000x.png?v=1716929421)
 
 ## About
 
