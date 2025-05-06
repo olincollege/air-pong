@@ -82,7 +82,7 @@ Now you can start playing! Good luck!
 <div style="display: flex; align-items: center;">
   <!-- Left Column: Circular Image -->
   <div style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; margin-right: 20px;">
-    <img src="assets/output.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
+    <img src="assets/julian.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
   </div>
 
   <!-- Right Column: Text -->
@@ -114,13 +114,13 @@ Now you can start playing! Good luck!
 <div style="display: flex; align-items: center;">
   <!-- Left Column: Circular Image -->
   <div style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; margin-right: 20px;">
-    <img src="models/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
+    <img src="assets/lukas.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
   </div>
 
   <!-- Right Column: Text -->
   <div>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-    <p>Sed tristique, odio a feugiat placerat.</p>
+    <p>Lukas Littlejohn</p>
+    <p>An ECE from West Springfield, MA (also really likes coffee)</p>
   </div>
 </div>
 
