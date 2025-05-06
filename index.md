@@ -92,6 +92,8 @@ Now you can start playing! Good luck!
   </div>
 </div>
 
+
+
 [comment]: <> (Ansel)
 <div style="display: flex; align-items: center;">
   <!-- Left Column: Circular Image -->
@@ -106,6 +108,8 @@ Now you can start playing! Good luck!
   </div>
 </div>
 
+
+
 [comment]: <> (Lukas)
 <div style="display: flex; align-items: center;">
   <!-- Left Column: Circular Image -->
@@ -119,3 +123,11 @@ Now you can start playing! Good luck!
     <p>Sed tristique, odio a feugiat placerat.</p>
   </div>
 </div>
+
+
+## Attribution
+
+- This project runs using Google's open source project [MediaPipe](https://ai.google.dev/edge/mediapipe/solutions/guide).
+- This project makes heavy use of pygame for visuals
+- This project makes heavy use of pynput for keyboard inputs
+- This project makes heavy use of vpython for physics and math
