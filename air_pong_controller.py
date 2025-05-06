@@ -220,13 +220,13 @@ class PongController:
         """
         # pull frame from cv2
         _, frame = self.cap.read()
-        frame = cv2.flip(frame, 1)
+        frame = cv2.flip(frame, 1)  # pylint: disable=no-member
         # run model on frame
         self.detect_async(frame)
 
         # draw the landmarks on the page for visualization
         landmarked_frame = draw_landmarks_on_image(frame, self.cv_result)
-        cv2.imshow("frame", landmarked_frame)
+        cv2.imshow("frame", landmarked_frame)  # pylint: disable=no-member
 
     def detect_async(self, frame):
         """
@@ -277,7 +277,8 @@ class PongController:
 
 
 def draw_landmarks_on_image(
-    rgb_image, detection_result: mp.tasks.vision.HandLandmarkerResult
+    rgb_image,
+    detection_result: mp.tasks.vision.HandLandmarkerResult,  # type: ignore
 ):
     """
     Google's fucntion to draw detected hand landmarks onto the given rgb frame.
@@ -301,10 +302,12 @@ def draw_landmarks_on_image(
                 hand_landmarks = hand_landmarks_list[idx]
 
                 # Draw the hand landmarks.
-                hand_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
+                hand_landmarks_proto = (
+                    landmark_pb2.NormalizedLandmarkList()  # pylint: disable=no-member
+                )
                 hand_landmarks_proto.landmark.extend(
                     [
-                        landmark_pb2.NormalizedLandmark(
+                        landmark_pb2.NormalizedLandmark(  # pylint: disable=no-member
                             x=landmark.x, y=landmark.y, z=landmark.z
                         )
                         for landmark in hand_landmarks
