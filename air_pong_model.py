@@ -59,12 +59,12 @@ class PongModel:
 
     # All variables use base SI units.
     _table_length, _table_width, _table_height = 2.74, 1.525, 0.653796
-    _paddle_width, paddle_length = 0.15, 0.17
+    _paddle_width, _paddle_length = 0.15, 0.17
     _net_height = 0.1525
     _table_front = (5 - _table_length) / 2
     _ball_mass = 0.0027
     _ball_radius = 0.02
-    _time_step = 0.001
+    _time_step = 0.01
     _acc_gravity = vector(0, -9.8, 0)
     _ball_rebound = 0.97
     _paddle_friction = 0.95
@@ -92,13 +92,13 @@ class PongModel:
         self._angle = 0
         self._mag_force = vector(0, 0, 0)
         self._drag_force = vector(0, 0, 0)
-        self._paddle_normal_pair = [vector(1, 0, 0), vector(-1, 0, 0)]
+        self._paddle_normal_pair = [vector(1, 1, 0), vector(-1, 0, 0)]
         self._paddle_normal = self._paddle_normal_pair[0]
         self._paddle_velocity_pair = [vector(0, 0, 0), vector(0, 0, 0)]
         self._paddle_velocity = self._paddle_velocity_pair[0]
         self._paddle_position_pair = [
             vector(
-                PongModel._table_front - 0.05,
+                PongModel._table_front + 0.05,
                 PongModel._table_height,
                 0,
             ),
@@ -116,6 +116,12 @@ class PongModel:
         self._serve_increment = serve_increment
         self.update_paddle(
             self._paddle_normal, self._paddle_position, self._paddle_velocity, 0
+        )
+        self.update_paddle(
+            self._paddle_normal_pair[1],
+            self._paddle_position_pair[1],
+            self._paddle_velocity_pair[1],
+            1,
         )
         self._paddle_edges = self._paddle_edges_pair[0]
         self._bounce_count = 0
@@ -310,16 +316,17 @@ class PongModel:
         # Convert updated paddle edges into a 2D array.
         self._paddle_edges_pair[player_paddle] = [
             [
-                self._paddle_edges_pair[player_paddle][0].x,
-                self._paddle_edges_pair[player_paddle][0].y,
-                self._paddle_edges_pair[player_paddle][0].z,
+                round(self._paddle_edges_pair[player_paddle][0].x, 5),
+                round(self._paddle_edges_pair[player_paddle][0].y, 5),
+                round(self._paddle_edges_pair[player_paddle][0].z, 5),
             ],
             [
-                self._paddle_edges_pair[player_paddle][1].x,
-                self._paddle_edges_pair[player_paddle][1].y,
-                self._paddle_edges_pair[player_paddle][1].z,
+                round(self._paddle_edges_pair[player_paddle][1].x, 5),
+                round(self._paddle_edges_pair[player_paddle][1].y, 5),
+                round(self._paddle_edges_pair[player_paddle][1].z, 5),
             ],
         ]
+        print(self._paddle_edges_pair[0])
 
     def hit_or_miss(self):
         """
@@ -562,7 +569,7 @@ class PongModel:
         and velocity.
         """
         # Set serving x position for player 1.
-        _serving_position = PongModel._table_front - 0.05
+        _serving_position = PongModel._table_front - 0.1
         # Change serving position if player 2 is serving.
         if self._player1_serving is False:
             _serving_position = (
@@ -572,7 +579,7 @@ class PongModel:
         self._ball_position = vector(
             _serving_position, PongModel._table_height, 0
         )
-        self._ball_velocity = vector(0, 2, 0)
+        self._ball_velocity = vector(0, 3, 0)
 
     def switch_paddle(self):
         """
@@ -601,6 +608,10 @@ class PongModel:
             PongModel._table_width,
             PongModel._table_height,
         )
+
+    @property
+    def paddle_dim(self):
+        return vector(PongModel._paddle_width, PongModel._paddle_length, 0.011)
 
     @property
     def table_front(self):
