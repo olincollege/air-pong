@@ -16,7 +16,9 @@ class PongView:
         self.screen = pygame.display.set_mode((1500, 600))  # 5x2
         self.ping_pong_table = pygame.image.load("models/ping_pong_table.png")
         self.scoreboard = pygame.image.load("models/scoreboard.png")
-        self.font = pygame.font.Font("models/monofonto_rg.otf", 0)
+        self.win_screen = pygame.image.load("models/win_screen.png")
+        self.score_font = pygame.font.Font("models/monofonto_rg.otf", 0)
+        self.win_font = pygame.font.Font("models/monofonto_rg.otf", 0)
 
     def prepare_images(self, pong_instance, screen):
         self.screen = screen
@@ -35,8 +37,14 @@ class PongView:
                 self.unit_scaling * 0.1875,
             ),
         )
-        self.font = pygame.font.Font(
+        self.score_font = pygame.font.Font(
             "models/monofonto_rg.otf", int(self.unit_scaling * 0.18)
+        )
+        self.win_font = pygame.font.Font(
+            "models/monofonto_rg.otf", int(self.unit_scaling * 0.18)
+        )
+        self.win_screen = pygame.transform.scale(
+            self.win_screen, (self.unit_scaling * 5, self.unit_scaling * 2)
         )
 
     def display(self, pong_instance, screen):
@@ -124,7 +132,7 @@ class PongView:
             ),
         )
         pygame.font.init()
-        left_score = self.font.render(
+        left_score = self.score_font.render(
             f"{pong_instance.player_score[0]}", True, (255, 255, 255)
         )
         left_score_rect = left_score.get_rect()
@@ -135,7 +143,7 @@ class PongView:
             ),  # 0.017 is the space above the number in the font
         )  # .085 is the scoreboard arc radius
         screen.blit(left_score, left_score_rect)
-        right_score = self.font.render(
+        right_score = self.score_font.render(
             f"{pong_instance.player_score[1]}", True, (255, 255, 255)
         )
         right_score_rect = left_score.get_rect()
@@ -148,3 +156,11 @@ class PongView:
         )  # .085 is the scoreboard arc radius
         screen.blit(left_score, left_score_rect)
         screen.blit(right_score, right_score_rect)
+
+    def win(self, winner, screen):
+        # if winner is not False:
+        if winner == 0:
+            screen.blit(self.win_screen, (0, 0))
+        if winner == 1:
+            self._win_screen = pygame.transform.flip(self.win_screen, 1, 0)
+            screen.blit(self._win_screen, (0, 0))

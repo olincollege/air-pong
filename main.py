@@ -32,6 +32,7 @@ def main():
         controller2.update_hand()
         model.trajectory()
         view.display(model, screen)
+        # view.win(0, screen)
         pygame.display.flip()
 
 
