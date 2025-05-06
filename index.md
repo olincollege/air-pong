@@ -10,7 +10,6 @@ layout: home
 
 <img src="assets/Images/logo.png" alt="drawing" width="200" style="display: block; margin-left: auto; margin-right: auto;" />
 
-![Game Demo](assets/demo.gif)
 <video controls src="assets/air_pong_video.mp4" title="Title"></video>
 
 ## About
