@@ -106,7 +106,7 @@ class PongView:
         # paddle 2
         pygame.draw.polygon(
             screen,
-            (255, 0, 0),
+            (0, 0, 255),
             (
                 (
                     self.unit_scaling * pong_instance.paddle_edges[1][0][0],
