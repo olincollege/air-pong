@@ -4,6 +4,7 @@ Ping Pong game simulator that uses computer vision for human input.
 
 <img src="models/logo.png" alt="drawing" width="200" style="display: block; margin-left: auto; margin-right: auto;" />
 
+
 ![Demo](models/demo.gif)
 
 ## Requirements
@@ -55,7 +56,11 @@ pip install -r requirements.txt
 python3 main.py
 ```
 
-Please note that the program requires a fast single thread CPU. If the code runs but is very slow it is a hardware limitation.
+Please note that the program requires a fast single thread CPU. If the code runs but is very slow it may be a hardware limitation.
+
+> [!IMPORTANT]
+> - Lighting can greatly effect reliability of hand recognition through camera. For best results, please play in a well lit area with high contrast.
+> - Hand recognition reliability varies based on skintone and other factors. Data on this subject can be found in the [MediaPipe brochure](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Hand%20Tracking%20(Lite_Full)%20with%20Fairness%20Oct%202021.pdf).
 
 ### Game rules
 
@@ -71,7 +76,7 @@ Before we begin, let's lay some ground truths.
 Now you can start playing! Good luck!
 
 ## Acknowledgements
-- This project runs using Google's open source project [MediaPipe](https://ai.google.dev/edge/mediapipe/solutions/guide).
+- This project runs using Google's open source CV project [MediaPipe](https://ai.google.dev/edge/mediapipe/solutions/guide).
 - This project makes heavy use of pygame for visuals
 - This project makes heavy use of pynput for keyboard inputs
 - This project makes heavy use of vpython for physics and math
