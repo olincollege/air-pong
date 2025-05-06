@@ -75,3 +75,47 @@ Before we begin, let's lay some ground truths.
 * Only one player can rotate their paddle at a time
 
 Now you can start playing! Good luck!
+
+## Authors
+
+[comment]: <> (Julian)
+<div style="display: flex; align-items: center;">
+  <!-- Left Column: Circular Image -->
+  <div style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; margin-right: 20px;">
+    <img src="assets/output.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
+  </div>
+
+  <!-- Right Column: Text -->
+  <div>
+    <p>Julian Shah</p>
+    <p>A robotics engineer and programmer from Seattle WA (really likes coffee)</p>
+  </div>
+</div>
+
+[comment]: <> (Ansel)
+<div style="display: flex; align-items: center;">
+  <!-- Left Column: Circular Image -->
+  <div style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; margin-right: 20px;">
+    <img src="models/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
+  </div>
+
+  <!-- Right Column: Text -->
+  <div>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    <p>Sed tristique, odio a feugiat placerat.</p>
+  </div>
+</div>
+
+[comment]: <> (Lukas)
+<div style="display: flex; align-items: center;">
+  <!-- Left Column: Circular Image -->
+  <div style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; margin-right: 20px;">
+    <img src="models/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
+  </div>
+
+  <!-- Right Column: Text -->
+  <div>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    <p>Sed tristique, odio a feugiat placerat.</p>
+  </div>
+</div>
