@@ -1,11 +1,12 @@
 """MVC controller class for hand and keybaord inputs"""
 
-import threading
 import time
 import cv2
 import mediapipe as mp
-from mediapipe import solutions
-from mediapipe.framework.formats import landmark_pb2
+from mediapipe import solutions  # pylint: disable=unused-import
+from mediapipe.framework.formats import (  # pylint: disable=no-name-in-module
+    landmark_pb2,  # pylint: disable=no-name-in-module
+)  # pylint: disable=no-name-in-module
 import numpy as np
 from vpython import vector
 from pynput import keyboard
@@ -26,6 +27,9 @@ class PongController:
             - y_dist: the distance of travel for the paddle zone in y
         vel_scaling = a float for the scaling factor of calculated velocity
             to model input velocity (0<vel_scaling<=1). Used in get_hand().
+        middle_finger_mcp: an int representing the middle finger knuckle index
+        del_time: a float represnting the change in timestep for calculating velocity
+        empty_landmark = a mp HandLandmarkerResult object for result comparisons
     """
 
     del_angle = 5
@@ -34,8 +38,8 @@ class PongController:
         [2.5, 2.5, 1.5, 1],
     ]  # [x_init_box, x_dist, y_init_box, y_dist]
     vel_scaling = 0.1
-    MIDDLE_FINGER_MCP = 9
-    DEL_TIME = 1 / 30
+    middle_finger_mcp = 9
+    del_time = 1 / 30
     empty_landmark = mp.tasks.vision.HandLandmarkerResult(
         handedness=[], hand_landmarks=[], hand_world_landmarks=[]
     )
@@ -73,7 +77,7 @@ class PongController:
         Args:
             attempt: an integer representing the current attempt
         """
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(0)  # pylint: disable=no-member
         time.sleep(0.5)
         if cap.isOpened():
             return cap
@@ -191,7 +195,7 @@ class PongController:
                     else 1
                 )
                 mid_pos = self.cv_result.hand_landmarks[i][
-                    self.MIDDLE_FINGER_MCP
+                    self.middle_finger_mcp
                 ]
 
                 # calculate velocity
@@ -199,9 +203,9 @@ class PongController:
                 vel = vector(0, 0, 0)
                 if prev_pos is not None:
                     vel = self.vel_scaling * vector(
-                        (prev_pos.x - mid_pos.x) / self.DEL_TIME,
-                        (prev_pos.y - mid_pos.y) / self.DEL_TIME,
-                        (prev_pos.z - mid_pos.z) / self.DEL_TIME,
+                        (prev_pos.x - mid_pos.x) / self.del_time,
+                        (prev_pos.y - mid_pos.y) / self.del_time,
+                        (prev_pos.z - mid_pos.z) / self.del_time,
                     )
                 self._previous_position[player] = mid_pos
 
@@ -265,9 +269,9 @@ class PongController:
 
         # callback function to grab latest cv result
         def update_result(
-            result: mp.tasks.vision.HandLandmarkerResult,
-            output_image: mp.Image,
-            timestamp_ms: int,
+            result: mp.tasks.vision.HandLandmarkerResult,  # type: ignore
+            output_image: mp.Image,  # pylint: disable=unused-argument
+            timestamp_ms: int,  # pylint: disable=unused-argument
         ):
             self.cv_result = result
 
