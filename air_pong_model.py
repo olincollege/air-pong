@@ -29,6 +29,7 @@ class PongModel:
             each side.
         current_bounce - An integer equal to the bounce_count when the ball
             last hit the net.
+        self._ball_home - A boolean that disables trajectory when True.
         table_length - Float equal to the length of ping pong table (meters).
         table_width - Float equal to the width of ping pong table (meters).
         table_height - Float equal to the height of ping pong table (meters).
@@ -92,7 +93,7 @@ class PongModel:
         self._angle = 0
         self._mag_force = vector(0, 0, 0)
         self._drag_force = vector(0, 0, 0)
-        self._paddle_normal_pair = [vector(1, 0, 0), vector(-1, 0, 0)]
+        self._paddle_normal_pair = [vector(1, 0, 0).hat, vector(-1, 0, 0)]
         self._paddle_normal = self._paddle_normal_pair[0]
         self._paddle_velocity_pair = [vector(0, 0, 0), vector(0, 0, 0)]
         self._paddle_velocity = self._paddle_velocity_pair[0]
@@ -127,6 +128,7 @@ class PongModel:
         self._bounce_count = 0
         self._current_bounce = 0
         self._player1_serving = True
+        self._ball_home = True
 
     def compute_magnus_force(self):
         """
@@ -261,23 +263,26 @@ class PongModel:
     def trajectory(self):
         """
         Base method for determining where the ball will go next after a time_step.
+        Method updates ball_position and ball_velocity attributes.
         """
-        # Switch which paddle the ball will hit next.
-        self.switch_paddle()
-        # Check for collisions.
-        self.hit_table()
-        self.paddle_bounce()
-        self.hit_net()
-        # Compute forces.
-        self._mag_force = self.compute_magnus_force()
-        self._drag_force = self.compute_drag()
-        # Update position based on current velocity.
-        self._ball_position += PongModel._time_step * self._ball_velocity
-        # Update velocity based on acting forces.
-        self._ball_velocity += (
-            PongModel._acc_gravity
-            + (self._mag_force + self._drag_force) / PongModel._ball_mass
-        ) * PongModel._time_step
+        # Check whether ball is in free motion.
+        if self._ball_home is False:
+            # Switch which paddle the ball will hit next.
+            self.switch_paddle()
+            # Check for collisions.
+            self.hit_table()
+            self.paddle_bounce()
+            self.hit_net()
+            # Compute forces.
+            self._mag_force = self.compute_magnus_force()
+            self._drag_force = self.compute_drag()
+            # Update position based on current velocity.
+            self._ball_position += PongModel._time_step * self._ball_velocity
+            # Update velocity based on acting forces.
+            self._ball_velocity += (
+                PongModel._acc_gravity
+                + (self._mag_force + self._drag_force) / PongModel._ball_mass
+            ) * PongModel._time_step
 
     def update_paddle(
         self, paddle_normal, paddle_position, paddle_velocity, player_paddle
@@ -501,12 +506,19 @@ class PongModel:
         """
         Method for updating the 'player_score' and 'player1_serving' attributes.
         """
-        # Check if player 1 has won a point and update score if so.
-        if self._bounce_count == 2:
+        # print(self._bounce_count)
+        # Check if player 2 has won a point and update score if so.
+        if self._bounce_count == 2 or (
+            self.ball_position.y < 0
+            and self.ball_position.x < self._table_front
+        ):
             self._player_score = (
                 self._player_score[0],
                 self._player_score[1] + 1,
             )
+            # Send ball to home and end trajectory.
+            self._ball_position = vector(0, 0, 0)
+            self._ball_home = True
             # Change player to serve based on given serve increment.
             if (
                 self._player_score[0]
@@ -514,12 +526,18 @@ class PongModel:
                 == 0
             ):
                 self._player1_serving = not (self._player1_serving)
-        # Check if player 2 has won a point and update score if so.
-        if self._bounce_count == -1:
+        # Check if player 1 has won a point and update score if so.
+        if self._bounce_count == -1 or (
+            self.ball_position.y < 0
+            and self.ball_position.x > self.table_dim.x + self._table_front
+        ):
             self._player_score = (
                 self._player_score[0] + 1,
                 self._player_score[1],
             )
+            # Send ball to home and end trajectory.
+            self._ball_position = vector(0, 0, 0)
+            self._ball_home = True
             # Change player to serve based on given serve increment.
             if (
                 self._player_score[0]
@@ -580,6 +598,7 @@ class PongModel:
             _serving_position, PongModel._table_height, 0
         )
         self._ball_velocity = vector(0, 3, 0)
+        self._ball_home = False
 
     def switch_paddle(self):
         """
