@@ -8,9 +8,9 @@
 layout: home
 ---
 
-<img src="assets/Images/logo.png" alt="drawing" width="200" style="display: block; margin-left: auto; margin-right: auto;" />
+<img src="assets/logo.png" alt="drawing" width="200" style="display: block; margin-left: auto; margin-right: auto;" />
 
-<video controls src="assets/air_pong_video.mp4" title="Title"></video>
+<video controls src="assets/air_pong_video.mp4" title="Title" style="display: block; margin-left: auto; margin-right: auto;"></video>
 
 ## About
 
@@ -92,7 +92,7 @@ Now you can start playing! Good luck!
 
 [comment]: <> (Julian)
 
-<div style="display: flex; align-items: center;">
+<div style="display: flex; align-items: center; margin-bottom: 30px;">
   <!-- Left Column: Circular Image -->
   <div style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; margin-right: 20px;">
     <img src="assets/julian.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
@@ -107,7 +107,7 @@ Now you can start playing! Good luck!
 
 [comment]: <> (Ansel)
 
-<div style="display: flex; align-items: center;">
+<div style="display: flex; align-items: center; margin-bottom: 30px;">
   <!-- Left Column: Circular Image -->
   <div style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; margin-right: 20px;">
     <img src="assets/ansel.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
@@ -116,7 +116,7 @@ Now you can start playing! Good luck!
   <!-- Right Column: Text -->
   <div>
     <p>Ansel Harris Crowne</p>
-    <p>An electrical and sustainability engineer from Portland, OR (coffee snob) </p>
+    <p>An electrical and sustainability engineer from Portland, OR (coffee snob)</p>
   </div>
 </div>
 
