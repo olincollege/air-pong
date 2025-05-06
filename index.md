@@ -10,7 +10,7 @@ layout: home
 <img src="assets/Images/logo.png" alt="drawing" width="200" style="display: block; margin-left: auto; margin-right: auto;" />
 
 ![Game Demo](assets/demo.gif)
-<video controls src="assets/rick_roll.MP4" title="Title"></video>
+<video controls src="assets/air_pong_video.mp4" title="Title"></video>
 ## About
 
 We set out to create a ping pong simulator game that allows a player to
