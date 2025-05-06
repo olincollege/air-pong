@@ -103,6 +103,33 @@ class PongView:
                 ),
             ),
         )
+        # paddle 2
+        pygame.draw.polygon(
+            screen,
+            (255, 0, 0),
+            (
+                (
+                    self.unit_scaling * pong_instance.paddle_edges[1][0][0],
+                    self.unit_scaling
+                    * (self.y_shift - pong_instance.paddle_edges[1][0][1]),
+                ),
+                (
+                    self.unit_scaling * pong_instance.paddle_edges[1][1][0],
+                    self.unit_scaling
+                    * (self.y_shift - pong_instance.paddle_edges[1][0][1]),
+                ),
+                (
+                    self.unit_scaling * pong_instance.paddle_edges[1][0][0],
+                    self.unit_scaling
+                    * (self.y_shift - pong_instance.paddle_edges[1][0][1]),
+                ),
+                (
+                    self.unit_scaling * pong_instance.paddle_edges[1][1][0],
+                    self.unit_scaling
+                    * (self.y_shift - pong_instance.paddle_edges[1][1][1]),
+                ),
+            ),
+        )
         # table
         screen.blit(
             self.ping_pong_table,
