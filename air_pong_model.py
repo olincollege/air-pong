@@ -326,7 +326,6 @@ class PongModel:
                 round(self._paddle_edges_pair[player_paddle][1].z, 5),
             ],
         ]
-        print(self._paddle_edges_pair[0])
 
     def hit_or_miss(self):
         """

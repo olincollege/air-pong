@@ -13,30 +13,38 @@ from pynput import keyboard
 
 class PongController:
     """
-    controller class for air-pong game
+    controller class for air-pong game.
 
     Attributes:
         del_angle: an int for the change in angle of paddle per press
+        paddle_scaling: a list of two lists of integers for paddle zone factoring
+            in meters.
+            [x_init_box, x_dist, y_init_box, y_dist]
+            - x_init_box: the starting x position for paddle zone
+            - x_dist: the distance of travel for the paddle zone in x
+            - y_init_box: the starting x position for paddle zone
+            - y_dist: the distance of travel for the paddle zone in y
+        vel_scaling = a float for the scaling factor of calculated velocity
+            to model input velocity (0<vel_scaling<=1)
     """
 
     del_angle = 5
     paddle_scaling = [
-        [0, 2.5, 0.5, 1],
-        [2.5, 2.5, 0.5, 1],
+        [0, 2.5, 1.5, 1],
+        [2.5, 2.5, 1.5, 1],
     ]  # [x_init_box, x_dist, y_init_box, y_dist]
+    vel_scaling = 0.1
 
     def __init__(self, model):
-        ## REMOVE CHOOSING HAND FUNCTIONALITY
         """
+        Start controller processes including keyboard monitoring and CV.
 
         Args:
             model: air pong PongModel object
-            player: a boolean, False = player 1 and True = player 2
-            hand: the hand assigned to the player
         """
         self._model = model
         self._previous_position = [None, None]
-        self._norm = vector(1, 0, 0)
+        self._norm = [vector(1, 0, 0), vector(-1, 0, 0)]
 
         # pynput keyboard listener
         self._keyboard_listen = keyboard.Listener(
@@ -55,7 +63,7 @@ class PongController:
 
     def create_cap(self, attempt):
         """
-        creates the videocapture element.
+        creates the videocapture element and checks for failed video opening.
         """
         cap = cv2.VideoCapture(0)
         time.sleep(0.5)
@@ -65,7 +73,7 @@ class PongController:
             print("video capture FAILED, closing")
             self.close()
         else:
-            print("video capture open failed, trying again")
+            print("video capture open failed, please restart")
             self.create_cap(attempt=attempt + 1)
 
     def on_press(self, key):  # REFACTOR AT SOME POINT
@@ -78,59 +86,67 @@ class PongController:
 
         self._latest_key = key
 
-        # check player one keyboard inputs
         if key == keyboard.Key.up or key == keyboard.KeyCode.from_char("w"):
             # Serve ball
             self._model.serve()
+        # check player one keyboard inputs
         elif key == keyboard.Key.left:
             # Get normal vector and rotate it counterclockwise
-            self._norm = vector.rotate(
-                self._norm,
+            new_norm = vector.rotate(
+                self._norm[0],
                 (self.del_angle * np.pi) / 180,
             )
-            self._model.update_paddle(
-                paddle_normal=self._norm,
-                paddle_position=self._model.paddle_position,
-                paddle_velocity=self._model.paddle_velocity,
-                player_paddle=0,
-            )
+            if new_norm.x > 0:
+                self._norm[0] = new_norm
+                self._model.update_paddle(
+                    paddle_normal=self._norm[0],
+                    paddle_position=self._model.paddle_position[0],
+                    paddle_velocity=self._model.paddle_velocity[0],
+                    player_paddle=0,
+                )
         elif key == keyboard.Key.right:
             # Get normal vector and rotate it clockwise
-            self._norm = vector.rotate(
-                self._norm,
+            new_norm = vector.rotate(
+                self._norm[0],
                 (-self.del_angle * np.pi) / 180,
             )
-            self._model.update_paddle(
-                paddle_normal=self._norm,
-                paddle_position=self._model.paddle_position,
-                paddle_velocity=self._model.paddle_velocity,
-                player_paddle=0,
-            )
+            if new_norm.x > 0:
+                self._norm[0] = new_norm
+                self._model.update_paddle(
+                    paddle_normal=self._norm[0],
+                    paddle_position=self._model.paddle_position[0],
+                    paddle_velocity=self._model.paddle_velocity[0],
+                    player_paddle=0,
+                )
         # check player two keyboard inputs
         elif key == keyboard.KeyCode.from_char("a"):
             # Get normal vector and rotate it counterclockwise
-            self._norm = vector.rotate(
-                self._norm,
+            new_norm = vector.rotate(
+                self._norm[1],
                 (self.del_angle * np.pi) / 180,
             )
-            self._model.update_paddle(
-                paddle_normal=self._norm,
-                paddle_position=self._model.paddle_position,
-                paddle_velocity=self._model.paddle_velocity,
-                player_paddle=1,
-            )
+            if new_norm.x < 0:
+                self._norm[1] = new_norm
+                self._model.update_paddle(
+                    paddle_normal=self._norm[1],
+                    paddle_position=self._model.paddle_position[1],
+                    paddle_velocity=self._model.paddle_velocity[1],
+                    player_paddle=1,
+                )
         elif key == keyboard.KeyCode.from_char("d"):
             # Get normal vector and rotate it clockwise
-            self._norm = vector.rotate(
-                self._norm,
+            new_norm = vector.rotate(
+                self._norm[1],
                 (-self.del_angle * np.pi) / 180,
             )
-            self._model.update_paddle(
-                paddle_normal=self._norm,
-                paddle_position=self._model.paddle_position,
-                paddle_velocity=self._model.paddle_velocity,
-                player_paddle=1,
-            )
+            if new_norm.x < 0:
+                self._norm[1] = new_norm
+                self._model.update_paddle(
+                    paddle_normal=self._norm[1],
+                    paddle_position=self._model.paddle_position[1],
+                    paddle_velocity=self._model.paddle_velocity[1],
+                    player_paddle=1,
+                )
 
     def on_release(self, key):
         """check if key is released"""
@@ -148,7 +164,6 @@ class PongController:
             vel: a vpython vector of velocity in m/s
             angle: a vpython normal vector to the center joint of palm
         """
-        print(f"running update hand")
         # pull frame
         _, frame = self.cap.read()
         frame = cv2.flip(frame, 1)
@@ -169,40 +184,33 @@ class PongController:
         # manipulate result
         if self.cv_result != empty_landmark:
             # get amount of hands
-
             for i, _ in enumerate(self.cv_result.handedness):
-                print(
-                    "hand parse is"
-                    f" {self.cv_result.handedness[i][0].display_name}"
-                )
                 player = (
-                    1
+                    0
                     if "Right" == self.cv_result.handedness[i][0].display_name
-                    else 0
+                    else 1
                 )
-
                 mid_pos = self.cv_result.hand_landmarks[i][MIDDLE_FINGER_MCP]
                 prev_pos = self._previous_position[i]
                 vel = vector(0, 0, 0)
                 if prev_pos is not None:
-                    vel = vector(
+                    vel = self.vel_scaling * vector(
                         (prev_pos.x - mid_pos.x) / DEL_TIME,
                         (prev_pos.y - mid_pos.y) / DEL_TIME,
                         (prev_pos.z - mid_pos.z) / DEL_TIME,
                     )
 
-                self._previous_position[i] = mid_pos
+                self._previous_position[player] = mid_pos
 
                 vect_mid_pos = vector(
-                    self.paddle_scaling[i][0]
-                    + self.paddle_scaling[i][1] * mid_pos.x,
-                    self.paddle_scaling[i][2]
-                    + self.paddle_scaling[i][3] * mid_pos.y,
+                    self.paddle_scaling[player][0]
+                    + self.paddle_scaling[player][1] * mid_pos.x,
+                    self.paddle_scaling[player][2]
+                    - self.paddle_scaling[player][3] * mid_pos.y,
                     mid_pos.z,
                 )
+
                 # update hand position in model
-                print(f"pos is {vect_mid_pos}")
-                print(f"vel is {vel}")
                 norm = self._model.paddle_normal[player]
                 self._model.update_paddle(
                     paddle_normal=norm,
@@ -257,15 +265,6 @@ class PongController:
 
         # initialize landmarker from options
         self.landmarker = self.landmarker.create_from_options(options)
-
-    def release(self):
-        """release everything"""
-        cap.release()
-        cv2.destroyAllWindows()
-
-    def close(self):
-        """close all running processes for controller"""
-        self.landmarker.close()
 
     @property
     def latest_key(self):
