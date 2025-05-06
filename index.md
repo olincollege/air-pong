@@ -9,6 +9,7 @@ layout: home
 ---
 
 ![Game Demo](assets/demo.gif)
+<video controls src="assets/rick_roll.MP4" title="Title"></video>
 ## About
 
 We set out to create a ping pong simulator game that allows a player to
