@@ -14,8 +14,7 @@ def main():
 
     # intialize MVCC (2 controllers)
     model = PongModel(2, 11)
-    controller1 = PongController(model, 1, "Left")
-    controller2 = PongController(model, 2, "Right")
+    controller1 = PongController(model)
     view = PongView()
     view.prepare_images(model, screen)
 
@@ -29,7 +28,6 @@ def main():
                 running = False
 
         controller1.update_hand()
-        controller2.update_hand()
         model.trajectory()
         view.display(model, screen)
         # view.win(0, screen)

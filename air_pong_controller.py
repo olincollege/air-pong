@@ -20,8 +20,12 @@ class PongController:
     """
 
     del_angle = 5
+    paddle_scaling = [
+        [0, 2.5, 0.5, 1],
+        [2.5, 2.5, 0.5, 1],
+    ]  # [x_init_box, x_dist, y_init_box, y_dist]
 
-    def __init__(self, model, player: int, hand: str):
+    def __init__(self, model):
         ## REMOVE CHOOSING HAND FUNCTIONALITY
         """
 
@@ -31,8 +35,7 @@ class PongController:
             hand: the hand assigned to the player
         """
         self._model = model
-        self._player = player
-        self._previous_position = None
+        self._previous_position = [None, None]
         self._norm = vector(1, 0, 0)
 
         # pynput keyboard listener
@@ -74,64 +77,60 @@ class PongController:
         """
 
         self._latest_key = key
-        if self._player == 1:
-            # check player one keyboard inputs
-            if key == keyboard.Key.up:
-                # Serve ball
-                self._model.serve()
-            elif key == keyboard.Key.left:
-                # Get normal vector and rotate it counterclockwise
-                self._norm = vector.rotate(
-                    self._norm,
-                    (self.del_angle * np.pi) / 180,
-                )
-                self._model.update_paddle(
-                    paddle_normal=self._norm,
-                    paddle_position=self._model.paddle_position,
-                    paddle_velocity=self._model.paddle_velocity,
-                    player_paddle=int(self._player),
-                )
-            elif key == keyboard.Key.right:
-                # Get normal vector and rotate it clockwise
-                self._norm = vector.rotate(
-                    self._norm,
-                    (-self.del_angle * np.pi) / 180,
-                )
-                self._model.update_paddle(
-                    paddle_normal=self._norm,
-                    paddle_position=self._model.paddle_position,
-                    paddle_velocity=self._model.paddle_velocity,
-                    player_paddle=self._player - 1,
-                )
-        elif self._player == 2:
-            # check player two keyboard inputs
-            if key == keyboard.KeyCode.from_char("w"):
-                # serve ball
-                self._model.serve()
-            elif key == keyboard.KeyCode.from_char("a"):
-                # Get normal vector and rotate it counterclockwise
-                self._norm = vector.rotate(
-                    self._norm,
-                    (self.del_angle * np.pi) / 180,
-                )
-                self._model.update_paddle(
-                    paddle_normal=self._norm,
-                    paddle_position=self._model.paddle_position,
-                    paddle_velocity=self._model.paddle_velocity,
-                    player_paddle=self._player - 1,
-                )
-            elif key == keyboard.KeyCode.from_char("d"):
-                # Get normal vector and rotate it clockwise
-                self._norm = vector.rotate(
-                    self._norm,
-                    (-self.del_angle * np.pi) / 180,
-                )
-                self._model.update_paddle(
-                    paddle_normal=self._norm,
-                    paddle_position=self._model.paddle_position,
-                    paddle_velocity=self._model.paddle_velocity,
-                    player_paddle=self._player - 1,
-                )
+
+        # check player one keyboard inputs
+        if key == keyboard.Key.up or key == keyboard.KeyCode.from_char("w"):
+            # Serve ball
+            self._model.serve()
+        elif key == keyboard.Key.left:
+            # Get normal vector and rotate it counterclockwise
+            self._norm = vector.rotate(
+                self._norm,
+                (self.del_angle * np.pi) / 180,
+            )
+            self._model.update_paddle(
+                paddle_normal=self._norm,
+                paddle_position=self._model.paddle_position,
+                paddle_velocity=self._model.paddle_velocity,
+                player_paddle=0,
+            )
+        elif key == keyboard.Key.right:
+            # Get normal vector and rotate it clockwise
+            self._norm = vector.rotate(
+                self._norm,
+                (-self.del_angle * np.pi) / 180,
+            )
+            self._model.update_paddle(
+                paddle_normal=self._norm,
+                paddle_position=self._model.paddle_position,
+                paddle_velocity=self._model.paddle_velocity,
+                player_paddle=0,
+            )
+        # check player two keyboard inputs
+        elif key == keyboard.KeyCode.from_char("a"):
+            # Get normal vector and rotate it counterclockwise
+            self._norm = vector.rotate(
+                self._norm,
+                (self.del_angle * np.pi) / 180,
+            )
+            self._model.update_paddle(
+                paddle_normal=self._norm,
+                paddle_position=self._model.paddle_position,
+                paddle_velocity=self._model.paddle_velocity,
+                player_paddle=1,
+            )
+        elif key == keyboard.KeyCode.from_char("d"):
+            # Get normal vector and rotate it clockwise
+            self._norm = vector.rotate(
+                self._norm,
+                (-self.del_angle * np.pi) / 180,
+            )
+            self._model.update_paddle(
+                paddle_normal=self._norm,
+                paddle_position=self._model.paddle_position,
+                paddle_velocity=self._model.paddle_velocity,
+                player_paddle=1,
+            )
 
     def on_release(self, key):
         """check if key is released"""
@@ -149,6 +148,7 @@ class PongController:
             vel: a vpython vector of velocity in m/s
             angle: a vpython normal vector to the center joint of palm
         """
+        print(f"running update hand")
         # pull frame
         _, frame = self.cap.read()
         frame = cv2.flip(frame, 1)
@@ -168,31 +168,48 @@ class PongController:
 
         # manipulate result
         if self.cv_result != empty_landmark:
-            mid_pos = self.cv_result.hand_landmarks[0][MIDDLE_FINGER_MCP]
-            prev_pos = self._previous_position
-            vel = 0
-            if prev_pos is not None:
-                vel = (
-                    np.sqrt(
-                        (prev_pos.x - mid_pos.x) ** 2
-                        + (prev_pos.y - mid_pos.y) ** 2
-                    )
-                    / DEL_TIME
+            # get amount of hands
+
+            for i, _ in enumerate(self.cv_result.handedness):
+                print(
+                    "hand parse is"
+                    f" {self.cv_result.handedness[i][0].display_name}"
+                )
+                player = (
+                    1
+                    if "Right" == self.cv_result.handedness[i][0].display_name
+                    else 0
                 )
 
-            self._previous_position = mid_pos
+                mid_pos = self.cv_result.hand_landmarks[i][MIDDLE_FINGER_MCP]
+                prev_pos = self._previous_position[i]
+                vel = vector(0, 0, 0)
+                if prev_pos is not None:
+                    vel = vector(
+                        (prev_pos.x - mid_pos.x) / DEL_TIME,
+                        (prev_pos.y - mid_pos.y) / DEL_TIME,
+                        (prev_pos.z - mid_pos.z) / DEL_TIME,
+                    )
 
-            # update hand position in model
-            vect_mid_pos = vector(mid_pos.x, mid_pos.y, mid_pos.z)
-            print(f"pos is {vect_mid_pos}")
-            print(f"vel is {vel}")
-            norm = self._model.paddle_normal[self._player - 1]
-            self._model.update_paddle(
-                paddle_normal=norm,
-                paddle_position=vect_mid_pos,
-                paddle_velocity=vel,
-                player_paddle=self._player - 1,
-            )
+                self._previous_position[i] = mid_pos
+
+                vect_mid_pos = vector(
+                    self.paddle_scaling[i][0]
+                    + self.paddle_scaling[i][1] * mid_pos.x,
+                    self.paddle_scaling[i][2]
+                    + self.paddle_scaling[i][3] * mid_pos.y,
+                    mid_pos.z,
+                )
+                # update hand position in model
+                print(f"pos is {vect_mid_pos}")
+                print(f"vel is {vel}")
+                norm = self._model.paddle_normal[player]
+                self._model.update_paddle(
+                    paddle_normal=norm,
+                    paddle_position=vect_mid_pos,
+                    paddle_velocity=vel,
+                    player_paddle=player,
+                )
 
     def hand_cv(self):
         """used to begin mediapipe hand detection"""
@@ -231,10 +248,10 @@ class PongController:
                 model_asset_path="hand_landmarker.task"
             ),  # path to model
             running_mode=mp.tasks.vision.RunningMode.LIVE_STREAM,  # running live stream
-            num_hands=1,  # track single hand for paddle
-            min_hand_detection_confidence=0.1,  # NEEDS TO BE TUNED
-            min_hand_presence_confidence=0.1,  # NEEDS TO BE TUNED
-            min_tracking_confidence=0.1,  # NEEDS TO BE TUNED
+            num_hands=2,  # track single hand for paddle
+            min_hand_detection_confidence=0.1,
+            min_hand_presence_confidence=0.1,
+            min_tracking_confidence=0.1,
             result_callback=update_result,
         )
 
