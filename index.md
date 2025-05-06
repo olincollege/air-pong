@@ -19,7 +19,16 @@ physically mime Pong Pong paddle motions to interact with the game. We wanted
 to challenge ourselves in doing accurate ping pong physical simulation and monocular
 computer vision.
 
-## structure
+## Structure
+
+<img src="assets/code framework.jpg" alt="drawing" width="600" style="display: block; margin-left: auto; margin-right: auto;" />
+
+
+This project uses an Model View Controller (MVC) framework for standard code organization. Each class is tied together through a main script that imports and runs the game in loop. The main features of each class are as follows
+* Main: runs the game and handles game over splash screen
+* Model: stores all game data and simulates ping pong physics and paddle interaction
+* Controller: uses mediapipe to get hand motions and pynput keyboard for angle and serve inputs
+* View: visualizes the table, ball and paddle in a pygame view
 
 ## Setup
 
