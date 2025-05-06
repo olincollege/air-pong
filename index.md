@@ -8,7 +8,7 @@
 layout: home
 ---
 
-![Game Demo](assets/Images/screenshot.PNG)
+![Game Demo](assets/demo.gif)
 ## About
 
 We set out to create a ping pong simulator game that allows a player to
