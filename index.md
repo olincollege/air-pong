@@ -7,7 +7,7 @@
 #
 layout: home
 ---
-<img src="models/Images/logo.png" alt="drawing" width="200" style="display: block; margin-left: auto; margin-right: auto;" />
+<img src="assets/Images/logo.png" alt="drawing" width="200" style="display: block; margin-left: auto; margin-right: auto;" />
 
 ![Game Demo](assets/demo.gif)
 <video controls src="assets/rick_roll.MP4" title="Title"></video>
