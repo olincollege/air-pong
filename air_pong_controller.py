@@ -50,6 +50,17 @@ class PongController:
 
         Args:
             model: air pong PongModel object
+
+        Attributes:
+            self._model: a PongModel object instance
+            self._previous_position: a list of vectors for each player velocity calculations.
+                Populated when running.
+            self._norm: a list of normal vectors for each player
+            self._keyboard_listen: a pynput keybaord listener object that runs async
+            self.cv_result: a HandLandmarksResult object of the latest detection result from the
+                mp callback
+            self.landmarker: an mp HandLandmarker object for hand detection
+            self.cap: a cv2 VideoCapture object to obtain camera frames
         """
         self._model = model
         self._previous_position = [None, None]
@@ -60,7 +71,6 @@ class PongController:
             on_press=self.on_press, on_release=self.on_release
         )
         self._keyboard_listen.start()
-        self._latest_key = None
 
         # mediapipe landmarker
         self.cv_result = mp.tasks.vision.HandLandmarkerResult(
@@ -83,7 +93,6 @@ class PongController:
             return cap
         elif attempt == 10:
             print("video capture FAILED, closing")
-            self.close()
         else:
             print("video capture open failed, please restart")
             self.create_cap(attempt=attempt + 1)
@@ -95,70 +104,49 @@ class PongController:
         Args:
             key: a pynput key object representing the key pressed
         """
-
-        self._latest_key = key
-
         if key == keyboard.Key.up or key == keyboard.KeyCode.from_char("w"):
             # Serve ball
             self._model.serve()
         # check player one keyboard inputs
-        if key == keyboard.Key.left:
+        elif key == keyboard.Key.left:
             # Get normal vector and rotate it counterclockwise
-            new_norm = vector.rotate(
-                self._norm[0],
-                (self.del_angle * np.pi) / 180,
-            )
-            if new_norm.x > 0:
-                self._norm[0] = new_norm
-                self._model.update_paddle(
-                    paddle_normal=self._norm[0],
-                    paddle_position=self._model.paddle_position[0],
-                    paddle_velocity=self._model.paddle_velocity[0],
-                    player_paddle=0,
-                )
+            self.rotate_paddle(0, False)
         elif key == keyboard.Key.right:
             # Get normal vector and rotate it clockwise
-            new_norm = vector.rotate(
-                self._norm[0],
-                (-self.del_angle * np.pi) / 180,
-            )
-            if new_norm.x > 0:
-                self._norm[0] = new_norm
-                self._model.update_paddle(
-                    paddle_normal=self._norm[0],
-                    paddle_position=self._model.paddle_position[0],
-                    paddle_velocity=self._model.paddle_velocity[0],
-                    player_paddle=0,
-                )
+            self.rotate_paddle(0, True)
         # check player two keyboard inputs
-        if key == keyboard.KeyCode.from_char("a"):
+        elif key == keyboard.KeyCode.from_char("a"):
             # Get normal vector and rotate it counterclockwise
-            new_norm = vector.rotate(
-                self._norm[1],
-                (self.del_angle * np.pi) / 180,
-            )
-            if new_norm.x < 0:
-                self._norm[1] = new_norm
-                self._model.update_paddle(
-                    paddle_normal=self._norm[1],
-                    paddle_position=self._model.paddle_position[1],
-                    paddle_velocity=self._model.paddle_velocity[1],
-                    player_paddle=1,
-                )
+            self.rotate_paddle(1, False)
         elif key == keyboard.KeyCode.from_char("d"):
             # Get normal vector and rotate it clockwise
-            new_norm = vector.rotate(
-                self._norm[1],
-                (-self.del_angle * np.pi) / 180,
+            self.rotate_paddle(1, True)
+
+    def rotate_paddle(self, player: int, clockwise: bool):
+        """
+        Rotate given players paddle normal vector and pass it to the model.
+
+        Args:
+            player: an int (0 or 1) representing which player is being targeted
+            clockwise: a book flag for clockwise rotation
+        """
+        direction_operator = -1 if clockwise else 1
+        new_norm = vector.rotate(
+            self._norm[player],
+            (direction_operator * self.del_angle * np.pi) / 180,
+        )
+        # prevent paddle overrotation
+        if (new_norm.x < 0 and bool(player)) or (
+            new_norm.x > 0 and not bool(player)
+        ):
+
+            self._norm[player] = new_norm
+            self._model.update_paddle(
+                paddle_normal=self._norm[player],
+                paddle_position=self._model.paddle_position[player],
+                paddle_velocity=self._model.paddle_velocity[player],
+                player_paddle=player,
             )
-            if new_norm.x < 0:
-                self._norm[1] = new_norm
-                self._model.update_paddle(
-                    paddle_normal=self._norm[1],
-                    paddle_position=self._model.paddle_position[1],
-                    paddle_velocity=self._model.paddle_velocity[1],
-                    player_paddle=1,
-                )
 
     def on_release(self, key):
         """
@@ -167,7 +155,6 @@ class PongController:
         Args:
             key: a pynput key object representing the key pressed
         """
-        self._latest_key = None
         if key == keyboard.Key.esc:
             # Stop listener
             print("wants to end")
@@ -181,7 +168,6 @@ class PongController:
         mediapipe hand_landmarks need to be converted into position (in meters)
         and velocity (in meters per second).
         """
-
         # run and visualize hand detection
         self.hand_cv()
 
@@ -232,7 +218,6 @@ class PongController:
         Grabs the latest cv2 frame, passes that into a non-blocking method for detection,
         and visualizes the latest processed result.
         """
-
         # pull frame from cv2
         _, frame = self.cap.read()
         frame = cv2.flip(frame, 1)
@@ -289,11 +274,6 @@ class PongController:
 
         # initialize landmarker from options
         self.landmarker = self.landmarker.create_from_options(options)
-
-    @property
-    def latest_key(self):
-        """gets the latest key pressed on keyboard"""
-        return self._latest_key
 
 
 def draw_landmarks_on_image(
