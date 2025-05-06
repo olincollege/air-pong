@@ -10,7 +10,7 @@ def main():
     """Run the air-pong game"""
 
     # initialize MVCC (2 controllers)
-    model = PongModel(2, 11)
+    model = PongModel(11, 2)
     controller = PongController(model)
     screen = pygame.display.set_mode((1500, 600))
     view = PongView(screen, model)
