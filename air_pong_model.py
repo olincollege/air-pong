@@ -66,7 +66,7 @@ class PongModel:
     _ball_radius = 0.02
     _time_step = 0.01
     _acc_gravity = vector(0, -9.8, 0)
-    _ball_rebound = 0.97
+    _ball_rebound = 0.9
     _paddle_friction = 0.95
     _table_friction = 0.75
     _paddle_stiff = 100
@@ -92,13 +92,13 @@ class PongModel:
         self._angle = 0
         self._mag_force = vector(0, 0, 0)
         self._drag_force = vector(0, 0, 0)
-        self._paddle_normal_pair = [vector(1, 1, 0), vector(-1, 0, 0)]
+        self._paddle_normal_pair = [vector(1, 0, 0), vector(-1, 0, 0)]
         self._paddle_normal = self._paddle_normal_pair[0]
         self._paddle_velocity_pair = [vector(0, 0, 0), vector(0, 0, 0)]
         self._paddle_velocity = self._paddle_velocity_pair[0]
         self._paddle_position_pair = [
             vector(
-                PongModel._table_front + 0.05,
+                PongModel._table_front - 0.05,
                 PongModel._table_height,
                 0,
             ),
@@ -402,6 +402,7 @@ class PongModel:
             and round(_paddle_edges_check[0][0], 3)
             >= _ball_position_check[0]
             - self.player_coefficient() * PongModel._ball_radius
+            >= _paddle_edges_check[0][0] - self.paddle_dim.y
         )
 
     def paddle_bounce(self):
