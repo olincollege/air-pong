@@ -30,7 +30,7 @@ def main():
         if model.check_win() is not False:
             view.win(model.check_win())
             pygame.display.flip()
-            pygame.time.delay(3000)
+            pygame.time.delay(5000)
             running = False
         pygame.display.flip()
 
