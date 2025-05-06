@@ -99,13 +99,13 @@ class PongModel:
         self._paddle_velocity = self._paddle_velocity_pair[0]
         self._paddle_position_pair = [
             vector(
-                PongModel._table_front - 0.05,
+                PongModel._table_front - 0.25,
                 PongModel._table_height,
                 0,
             ),
             # Start 5cm away from edge so as not to interfere with serve.
             vector(
-                PongModel._table_front + PongModel._table_length + 0.05,
+                PongModel._table_front + PongModel._table_length + 0.25,
                 PongModel._table_height,
                 0,
             ),
@@ -202,7 +202,7 @@ class PongModel:
             )
             # Update bounce count depending on the active player to
             # detect a point won.
-            if self.player_coefficient() == 1:
+            if self._player_coefficient() == 1:
                 self._bounce_count += 1
             else:
                 self._bounce_count -= 1
@@ -216,7 +216,7 @@ class PongModel:
         # Check if ball edge is above the center line of the table.
         if round(
             self._ball_position.x
-            + self.player_coefficient() * self._ball_radius,
+            + self._player_coefficient() * self._ball_radius,
             2,
         ) == PongModel._table_front + round(PongModel._table_length / 2, 2):
             # Check if the center of the ball is below the top of the net.
@@ -225,7 +225,7 @@ class PongModel:
                 < PongModel._net_height + PongModel._table_height
             ):
                 self._ball_velocity = vector(
-                    -0.1 * self.player_coefficient(), 0, 0
+                    -0.1 * self._player_coefficient(), 0, 0
                 )
             # Check if only the bottom half of ball is below the top of net.
             elif (
@@ -265,7 +265,7 @@ class PongModel:
         Base method for determining where the ball will go next after a time_step.
         Method updates ball_position and ball_velocity attributes.
         """
-        self._bounce_count = (-self.player_coefficient() + 1) // 2
+        self._bounce_count = (-self._player_coefficient() + 1) // 2
         # Check whether ball is in free motion.
         if self._ball_home is False:
             # Switch which paddle the ball will hit next.
@@ -343,7 +343,7 @@ class PongModel:
         """
         # Define vector parallel to paddle face (long direction).
         _horizontal_factor = vector.rotate(
-            self.player_coefficient()
+            self._player_coefficient()
             * vector.norm(
                 vector(
                     self._paddle_normal.x,
@@ -406,7 +406,7 @@ class PongModel:
             >= round(_paddle_edges_check[1][1], 4)
             and round(_paddle_edges_check[0][0], 3)
             >= _ball_position_check[0]
-            - self.player_coefficient() * PongModel._ball_radius
+            - self._player_coefficient() * PongModel._ball_radius
             >= _paddle_edges_check[0][0] - self.paddle_dim.y
         )
 
@@ -438,7 +438,7 @@ class PongModel:
             while (
                 _spring_disp.mag
                 >= vector.proj(
-                    self.player_coefficient() * self._ball_position,
+                    self._player_coefficient() * self._ball_position,
                     self._paddle_normal,
                 ).mag
             ):
@@ -468,7 +468,7 @@ class PongModel:
                 )
                 # Compute final velocity for cum_time.
                 self._ball_velocity = (
-                    -self.player_coefficient()
+                    -self._player_coefficient()
                     * self._paddle_normal
                     * (
                         -PongModel._paddle_force
@@ -507,7 +507,6 @@ class PongModel:
         """
         Method for updating the 'player_score' and 'player1_serving' attributes.
         """
-        # print(self._bounce_count)
         # Check if player 2 has won a point and update score if so.
         if self._bounce_count == 2 or (
             self.ball_position.y < -2
@@ -570,7 +569,7 @@ class PongModel:
             return 2
         return False
 
-    def player_coefficient(self):
+    def _player_coefficient(self):
         """
         Returns integers -1 or 1 depending on which side of the table
         the ball is on: -1 for right and 1 for left.
@@ -607,7 +606,7 @@ class PongModel:
         Method updates single paddle state attributes
         based on which side of the table the ball is on.
         """
-        _paddle_index = (1 - self.player_coefficient()) // 2
+        _paddle_index = (1 - self._player_coefficient()) // 2
         self._paddle_normal = self._paddle_normal_pair[_paddle_index]
         self._paddle_velocity = self._paddle_velocity_pair[_paddle_index]
         self._paddle_position = self._paddle_position_pair[_paddle_index]
