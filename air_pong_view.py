@@ -29,7 +29,7 @@ class PongView:
         pygame.font.init()  # Initialize pygame fonts
         self.pong_instance = pong_instance
         self.background_colour = (255, 255, 255)  # white background
-        self.unit_scaling = 0  # conversion between the model and the screen, calculated in prepare_images
+        self.unit_scaling = 0  # conversion between model and screen, calculated in prepare_images
         self.x_shift = 0.5 * (
             5 - 2.74
         )  # 2.74 is the width of the table, 5 is the width of the screen
