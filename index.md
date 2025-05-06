@@ -8,7 +8,7 @@
 layout: home
 ---
 
-![Game Demo](/assets/images/screenshot.png)
+![Game Demo](assets/images/screenshot.png)
 
 ## About
 
