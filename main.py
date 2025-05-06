@@ -1,36 +1,38 @@
-import pygame
-from vpython import vector
+"""Main file to run the air-pong game"""
 
+import pygame
 from air_pong_view import PongView
 from air_pong_controller import PongController
 from air_pong_model import PongModel
-
-screen = pygame.display.set_mode((1200, 700))
-screen.fill((255, 255, 255))
 
 
 def main():
     """Run the air-pong game"""
 
-    # intialize MVCC (2 controllers)
+    # initialize MVCC (2 controllers)
     model = PongModel(2, 11)
-    controller1 = PongController(model)
-    view = PongView()
-    view.prepare_images(model, screen)
+    # controller = PongController(model)
+    screen = pygame.display.set_mode((1500, 600))
+    view = PongView(screen, model)
+    view.prepare_images()
 
     # main loop to run code
     running = True
     while running:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                # controller1.release()
-                # controller2.release()
+            if event.type == pygame.QUIT:  # pylint: disable=no-member
                 running = False
 
-        controller1.update_hand()
+        # controller.update_hand()
         model.trajectory()
-        view.display(model, screen)
-        # view.win(0, screen)
+        view.display()
+        model.check_point()
+        if model.check_win() is not False:
+            while running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:  # pylint: disable=no-member
+                        running = False
+                view.win(model.check_win())
         pygame.display.flip()
 
 

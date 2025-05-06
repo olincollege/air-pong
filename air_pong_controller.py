@@ -16,7 +16,7 @@ class PongController:
     controller class for air-pong game.
 
     Attributes:
-        del_angle: an int for the change in angle of paddle per press
+        del_angle: an int for the change in angle of paddle per key press
         paddle_scaling: a list of two lists of integers for paddle zone factoring
             in meters.
             [x_init_box, x_dist, y_init_box, y_dist]
@@ -25,7 +25,7 @@ class PongController:
             - y_init_box: the starting x position for paddle zone
             - y_dist: the distance of travel for the paddle zone in y
         vel_scaling = a float for the scaling factor of calculated velocity
-            to model input velocity (0<vel_scaling<=1)
+            to model input velocity (0<vel_scaling<=1). Used in get_hand().
     """
 
     del_angle = 5
@@ -34,6 +34,11 @@ class PongController:
         [2.5, 2.5, 1.5, 1],
     ]  # [x_init_box, x_dist, y_init_box, y_dist]
     vel_scaling = 0.1
+    MIDDLE_FINGER_MCP = 9
+    DEL_TIME = 1 / 30
+    empty_landmark = mp.tasks.vision.HandLandmarkerResult(
+        handedness=[], hand_landmarks=[], hand_world_landmarks=[]
+    )
 
     def __init__(self, model):
         """
@@ -64,6 +69,9 @@ class PongController:
     def create_cap(self, attempt):
         """
         creates the videocapture element and checks for failed video opening.
+
+        Args:
+            attempt: an integer representing the current attempt
         """
         cap = cv2.VideoCapture(0)
         time.sleep(0.5)
@@ -76,9 +84,9 @@ class PongController:
             print("video capture open failed, please restart")
             self.create_cap(attempt=attempt + 1)
 
-    def on_press(self, key):  # REFACTOR AT SOME POINT
+    def on_press(self, key):
         """
-        control rotation and serve when key is pressed by the player.
+        Method called when pynput detects a key has been pressed.
 
         Args:
             key: a pynput key object representing the key pressed
@@ -90,7 +98,7 @@ class PongController:
             # Serve ball
             self._model.serve()
         # check player one keyboard inputs
-        elif key == keyboard.Key.left:
+        if key == keyboard.Key.left:
             # Get normal vector and rotate it counterclockwise
             new_norm = vector.rotate(
                 self._norm[0],
@@ -119,7 +127,7 @@ class PongController:
                     player_paddle=0,
                 )
         # check player two keyboard inputs
-        elif key == keyboard.KeyCode.from_char("a"):
+        if key == keyboard.KeyCode.from_char("a"):
             # Get normal vector and rotate it counterclockwise
             new_norm = vector.rotate(
                 self._norm[1],
@@ -149,7 +157,12 @@ class PongController:
                 )
 
     def on_release(self, key):
-        """check if key is released"""
+        """
+        Method called when pynput detects a key has been released.
+
+        Args:
+            key: a pynput key object representing the key pressed
+        """
         self._latest_key = None
         if key == keyboard.Key.esc:
             # Stop listener
@@ -157,32 +170,19 @@ class PongController:
 
     def update_hand(self):
         """
-        Create the hand for the
+        Pulls the latest hand detection result, processes it, then passes
+        that to the model.
 
-        Returns:
-            pos: a vpython vector representing the xyz position of hand
-            vel: a vpython vector of velocity in m/s
-            angle: a vpython normal vector to the center joint of palm
+        Since the model only operates in a physical space, detected scales from
+        mediapipe hand_landmarks need to be converted into position (in meters)
+        and velocity (in meters per second).
         """
-        # pull frame
-        _, frame = self.cap.read()
-        frame = cv2.flip(frame, 1)
-        # non-blocking landmarker execution
-        self.detect_async(frame)
 
-        # draw the landmarks on the page
-        landmarked_frame = draw_landmarks_on_image(frame, self.cv_result)
-        cv2.imshow("frame", landmarked_frame)
-
-        # variables for easy tuning
-        MIDDLE_FINGER_MCP = 9
-        DEL_TIME = 1 / 30
-        empty_landmark = mp.tasks.vision.HandLandmarkerResult(
-            handedness=[], hand_landmarks=[], hand_world_landmarks=[]
-        )
+        # run and visualize hand detection
+        self.hand_cv()
 
         # manipulate result
-        if self.cv_result != empty_landmark:
+        if self.cv_result != self.empty_landmark:
             # get amount of hands
             for i, _ in enumerate(self.cv_result.handedness):
                 player = (
@@ -190,18 +190,22 @@ class PongController:
                     if "Right" == self.cv_result.handedness[i][0].display_name
                     else 1
                 )
-                mid_pos = self.cv_result.hand_landmarks[i][MIDDLE_FINGER_MCP]
+                mid_pos = self.cv_result.hand_landmarks[i][
+                    self.MIDDLE_FINGER_MCP
+                ]
+
+                # calculate velocity
                 prev_pos = self._previous_position[i]
                 vel = vector(0, 0, 0)
                 if prev_pos is not None:
                     vel = self.vel_scaling * vector(
-                        (prev_pos.x - mid_pos.x) / DEL_TIME,
-                        (prev_pos.y - mid_pos.y) / DEL_TIME,
-                        (prev_pos.z - mid_pos.z) / DEL_TIME,
+                        (prev_pos.x - mid_pos.x) / self.DEL_TIME,
+                        (prev_pos.y - mid_pos.y) / self.DEL_TIME,
+                        (prev_pos.z - mid_pos.z) / self.DEL_TIME,
                     )
-
                 self._previous_position[player] = mid_pos
 
+                # scale hand position to bounding box
                 vect_mid_pos = vector(
                     self.paddle_scaling[player][0]
                     + self.paddle_scaling[player][1] * mid_pos.x,
@@ -220,17 +224,28 @@ class PongController:
                 )
 
     def hand_cv(self):
-        """used to begin mediapipe hand detection"""
+        """
+        Grabs the latest cv2 frame, passes that into a non-blocking method for detection,
+        and visualizes the latest processed result.
+        """
 
-        # pull frame
+        # pull frame from cv2
         _, frame = self.cap.read()
-
         frame = cv2.flip(frame, 1)
-        # non-blocking landmarker execution
+        # run model on frame
         self.detect_async(frame)
 
+        # draw the landmarks on the page for visualization
+        landmarked_frame = draw_landmarks_on_image(frame, self.cv_result)
+        cv2.imshow("frame", landmarked_frame)
+
     def detect_async(self, frame):
-        """begin non-blocking detection of landmarks through the class landmarker"""
+        """
+        begin non-blocking detection of landmarks with mediapipe.
+
+        Args:
+            frame: a numpy RGB frame object
+        """
         # convert np frame to mp image
         if frame is not None:
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
@@ -240,16 +255,21 @@ class PongController:
             )
 
     def create_landmarker(self):
-        """creates the landmarker object from the hand landmarker.task"""
+        """
+        Initializes the mediapipe landmarker object from the hand landmarker.task
+        in livestream mode.
+
+        Parameters resource
+        https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/python#configuration_options
+        """
 
         # callback function to grab latest cv result
         def update_result(
             result: mp.tasks.vision.HandLandmarkerResult,
             output_image: mp.Image,
             timestamp_ms: int,
-        ):  #
+        ):
             self.cv_result = result
-            #
 
         options = mp.tasks.vision.HandLandmarkerOptions(
             base_options=mp.tasks.BaseOptions(
@@ -276,9 +296,15 @@ def draw_landmarks_on_image(
     rgb_image, detection_result: mp.tasks.vision.HandLandmarkerResult
 ):
     """
-    Courtesy of https://github.com/googlesamples/mediapipe/blob/main/examples/hand_landmarker/python/hand_landmarker.ipynb
+    Google's fucntion to draw detected hand landmarks onto the given rgb frame.
 
-    Visualize the landmarks on the page for the game"""
+    Courtesy of
+    https://github.com/googlesamples/mediapipe/blob/main/examples/hand_landmarker/python/hand_landmarker.ipynb
+
+    Args:
+        rgb_image a numpy RGB image object
+        detection_result: a mp HandLandmarkerResult object of desired landmarks to draw
+    """
     try:
         if detection_result.hand_landmarks == []:
             return rgb_image
