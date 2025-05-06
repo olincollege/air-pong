@@ -8,8 +8,13 @@
 layout: home
 ---
 
-### About
+![Game Demo](/assets/images/screenshot.png)
 
-The goal of this project
+## About
 
-##
+We set out to create a ping pong simulator game that allows a player to
+physcially mime Pong Pong motion to interact with the game. We wanted
+to challenge ourselves in doing accurate ping pong physica and monocular
+computer vision.
+
+## structure
