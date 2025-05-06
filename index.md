@@ -12,8 +12,8 @@ layout: home
 ## About
 
 We set out to create a ping pong simulator game that allows a player to
-physically mime Pong Pong motion to interact with the game. We wanted
-to challenge ourselves in doing accurate ping pong physical and monocular
+physically mime Pong Pong paddle motions to interact with the game. We wanted
+to challenge ourselves in doing accurate ping pong physical simulation and monocular
 computer vision.
 
 ## structure
