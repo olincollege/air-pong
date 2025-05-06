@@ -28,13 +28,10 @@ def main():
         view.display()
         model.check_point()
         if model.check_win() is not False:
-            while running:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:  # pylint: disable=no-member
-                        running = False
-                view.win(model.check_win())
-
-        print(f"points are {model.player_score}")
+            view.win(model.check_win())
+            pygame.display.flip()
+            pygame.time.delay(5000)
+            running = False
         pygame.display.flip()
 
 

@@ -212,13 +212,13 @@ class PongView:
     def win(self, winner):
         """display the win screen
         Args:
-            winner (int): 0 for left player, 1 for right player
+            winner (int): 1 for left player, 2 for right player
         """
-        if winner == 0:
+        if winner == 1:
             self.screen.blit(
                 self.win_screen, (0, 0)
             )  # display the win screen, left player wins
-        if winner == 1:
+        if winner == 2:
 
             self.screen.blit(
                 pygame.transform.flip(self.win_screen, 1, 0), (0, 0)
